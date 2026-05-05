@@ -325,6 +325,7 @@ def open_annotator(parent, image_path: str) -> list:
     btn_confirm.configure(state="disabled", colors=BTN_OK_OFF)
     btn_confirm.pack(side="left")
 
+
     # Pencere boyutu
     extra_h = 40 + 24 + 60 + 20
     win_w   = min(disp_w, MAX_W) + 30
