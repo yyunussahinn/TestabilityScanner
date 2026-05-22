@@ -1,27 +1,20 @@
 """
-smart_checker.py — v4.2
+smart_checker.py — v4.4
 ────────────────────────────────────────────────────────────────
-Akıllı Tarama modülü.
-
-Görevler:
-  1. Appium'a bağlan, ekran görüntüsü al, elementleri topla (rect dahil)
-  2. Driver'ı kapat
-  3. claude_filter ile annotation kutularını eşleştir
-  4. shared.py fonksiyonlarıyla Word + Excel + JSON raporu üret
-
-v4.2: generate_reports artık shared.generate_word / generate_excel / generate_json
-      kullanıyor → tam tarama ile aynı çıktı formatı.
+v4.4 düzeltmeleri:
+  - iOS screenshot retina (3x) pixel uzayı ile Appium point (1x) uzayı
+    arasındaki koordinat uyumsuzluğu giderildi.
+    Artık connect_and_capture, screenshot boyutundan pixel_ratio hesaplayıp
+    tüm rect koordinatlarını screenshot piksel uzayına dönüştürüyor.
+    Annotator da zaten screenshot piksel uzayında box kaydediyor → eşleşme doğru.
+  - _get_ios_rect: el.location + el.size önce deneniyor (daha güvenilir).
 """
-
+import config as cfg
+BLACKLIST = set(cfg.BLACKLIST_IDS)
 import time
 import os
 from datetime import datetime
 from collections import Counter
-
-
-# ════════════════════════════════════════════════════════════════════════════
-#  PLATFORM SABITLERI
-# ════════════════════════════════════════════════════════════════════════════
 
 IOS_ALWAYS = [
     "XCUIElementTypeTextField",
@@ -43,14 +36,11 @@ AND_ALWAYS = [
 AND_CONDITIONAL = [
     "android.view.View",
     "android.view.ViewGroup",
-    "android.widget.FrameLayout",
-    "android.widget.LinearLayout",
     "android.widget.RelativeLayout",
     "android.widget.ImageView",
 ]
 AND_RESOURCE_ONLY = ["android.widget.TextView"]
 
-# Status sabitleri — shared.py ile aynı
 STATUS_UNIQUE    = "ID Var"
 STATUS_DUPLICATE = "Duplicate"
 STATUS_MISSING   = "ID Yok"
@@ -68,12 +58,7 @@ def get_new_status(status: str) -> str:
 def connect_and_capture(platform: str, profile: dict,
                          appium_server: str, screenshot_path: str,
                          log_cb=print) -> tuple[list, str]:
-    """
-    Appium'a bağlan, screenshot al, elementleri topla, driver'ı kapat.
-    Dönüş: (all_elements, detected_page)
-    """
     from appium import webdriver
-    from appium.webdriver.common.appiumby import AppiumBy
 
     log_cb("🚀 Appium driver başlatılıyor...")
 
@@ -109,12 +94,31 @@ def connect_and_capture(platform: str, profile: dict,
     detected_page = _get_detected_page(driver, platform)
     log_cb(f"   → Tespit edilen sayfa: {detected_page or '(bulunamadı)'}")
 
+    # ── Koordinat dönüşüm oranını hesapla ────────────────────────────────────
+    # Appium point uzayı (örn: 390x844) ile screenshot piksel uzayı (örn: 1170x2532)
+    # arasındaki fark. Annotator screenshot piksel uzayında box kaydediyor,
+    # Appium el.location/el.rect point uzayında koordinat döndürüyor.
+    # pixel_ratio = screenshot_genislik / appium_window_genislik
+    pixel_ratio = 1.0
+    if platform == "ios":
+        try:
+            from PIL import Image as PILImage
+            with PILImage.open(screenshot_path) as img:
+                ss_w, ss_h = img.size
+            window = driver.get_window_size()
+            pt_w   = window.get("width", ss_w)
+            pixel_ratio = ss_w / pt_w if pt_w > 0 else 1.0
+            log_cb(f"   → Screenshot: {ss_w}x{ss_h}px  |  Appium window: {pt_w}x{window.get('height')}pt  |  pixel_ratio: {pixel_ratio:.1f}x")
+        except Exception as e:
+            log_cb(f"   ⚠️  pixel_ratio hesaplanamadı ({e}), 1.0 kullanılıyor")
+            pixel_ratio = 1.0
+
     log_cb("🔍 Elementler taranıyor...")
     screen_size = driver.get_window_size()
     sw = screen_size["width"]
     sh = screen_size["height"]
 
-    all_elements = _collect_elements(driver, platform, detected_page, sw, sh, log_cb)
+    all_elements = _collect_elements(driver, platform, detected_page, sw, sh, pixel_ratio, log_cb)
 
     driver.quit()
     log_cb("✅ Driver kapatıldı.")
@@ -150,16 +154,14 @@ def _get_detected_page(driver, platform: str) -> str:
 
 
 def _collect_elements(driver, platform: str, detected_page: str,
-                       sw: int, sh: int, log_cb) -> list:
-    from appium.webdriver.common.appiumby import AppiumBy as AB
-
+                       sw: int, sh: int, pixel_ratio: float, log_cb) -> list:
     candidates   = []
     all_elements = []
 
     if platform == "ios":
-        all_elements, candidates = _collect_ios(driver, detected_page, sw, sh, AB)
+        all_elements, candidates = _collect_ios(driver, detected_page, sw, sh, pixel_ratio)
     else:
-        all_elements, candidates = _collect_android(driver, detected_page, AB)
+        all_elements, candidates = _collect_android(driver, detected_page)
 
     name_counts = Counter(r["acc_id"] for r in candidates)
     for row in candidates:
@@ -168,10 +170,57 @@ def _collect_elements(driver, platform: str, detected_page: str,
                          else STATUS_DUPLICATE)
         all_elements.append(row)
 
+    # rect bilgisi olan/olmayan log
+    with_rect    = sum(1 for e in all_elements if e.get("rect"))
+    without_rect = sum(1 for e in all_elements if not e.get("rect"))
+    log_cb(f"   → rect bilgisi olan: {with_rect}, olmayan: {without_rect}")
+
     return all_elements
 
 
-def _collect_ios(driver, detected_page, sw, sh, AppiumBy):
+def _get_ios_rect(el, pixel_ratio: float = 1.0) -> dict | None:
+    """
+    iOS element koordinatlarını screenshot piksel uzayına dönüştürür.
+
+    SORUN (v4.3 ve öncesi):
+      Appium, iOS element koordinatlarını POINT uzayında (örn: 390x844) döndürür.
+      Annotator ise SCREENSHOT PİKSEL uzayında (örn: 1170x2532) box kaydeder.
+      Bu iki uzay retina ekranlarda 3x farklı → hiçbir koordinat eşleşmez.
+
+    ÇÖZÜM (v4.4):
+      el.location + el.size (point) × pixel_ratio = screenshot piksel koordinatı
+    """
+    # Yöntem 1: location + size (XCUITest'te daha güvenilir)
+    try:
+        loc = el.location  # {'x': int, 'y': int}  — point uzayı
+        siz = el.size      # {'width': int, 'height': int}  — point uzayı
+        if siz.get("width", 0) > 0 and siz.get("height", 0) > 0:
+            return {
+                "x":      int(loc["x"]      * pixel_ratio),
+                "y":      int(loc["y"]      * pixel_ratio),
+                "width":  int(siz["width"]  * pixel_ratio),
+                "height": int(siz["height"] * pixel_ratio),
+            }
+    except Exception:
+        pass
+
+    # Yöntem 2: el.rect (fallback)
+    try:
+        r = el.rect
+        if r and r.get("width", 0) > 0 and r.get("height", 0) > 0:
+            return {
+                "x":      int(r["x"]      * pixel_ratio),
+                "y":      int(r["y"]      * pixel_ratio),
+                "width":  int(r["width"]  * pixel_ratio),
+                "height": int(r["height"] * pixel_ratio),
+            }
+    except Exception:
+        pass
+
+    return None
+
+
+def _collect_ios(driver, detected_page, sw, sh, pixel_ratio):
     from appium.webdriver.common.appiumby import AppiumBy as AB
 
     def get_name(el):  return el.get_attribute("name")  or ""
@@ -203,14 +252,6 @@ def _collect_ios(driver, detected_page, sw, sh, AppiumBy):
     def is_undefined(name):
         return "undefined" in name.lower() or name.startswith("__")
 
-    def get_rect(el):
-        try:
-            r = el.rect
-            return {"x": r["x"], "y": r["y"],
-                    "width": r["width"], "height": r["height"]}
-        except Exception:
-            return None
-
     all_elems  = []
     candidates = []
 
@@ -228,7 +269,9 @@ def _collect_ios(driver, detected_page, sw, sh, AppiumBy):
             value   = get_value(el)
             display = label or value or ""
             stype   = short_type(etype)
-            rect    = get_rect(el)
+
+            # pixel_ratio ile screenshot piksel uzayına dönüştür
+            rect = _get_ios_rect(el, pixel_ratio)
 
             if has_real_id(name, label):
                 entry = {"page": detected_page, "type": stype,
@@ -248,7 +291,7 @@ def _collect_ios(driver, detected_page, sw, sh, AppiumBy):
     return all_elems, candidates
 
 
-def _collect_android(driver, detected_page, AppiumBy):
+def _collect_android(driver, detected_page):
     from appium.webdriver.common.appiumby import AppiumBy as AB
 
     def short_type(t):  return t.split(".")[-1]
@@ -282,6 +325,7 @@ def _collect_android(driver, detected_page, AppiumBy):
         return False
 
     def get_rect(el):
+        # Android'de zaten 1:1, pixel_ratio gerekmez
         try:
             r = el.rect
             return {"x": r["x"], "y": r["y"],
@@ -311,6 +355,8 @@ def _collect_android(driver, detected_page, AppiumBy):
                 continue
 
             if rid:
+                if rid in BLACKLIST or (rid.startswith("__") and rid.endswith("__")):
+                    continue
                 entry = {"page": detected_page, "type": stype,
                          "label": label, "value": value,
                          "acc_id": rid, "rect": rect}
@@ -329,7 +375,7 @@ def _collect_android(driver, detected_page, AppiumBy):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#  RAPOR ÜRETIMI — shared.py fonksiyonları kullanılıyor (tam tarama ile aynı)
+#  RAPOR ÜRETIMI
 # ════════════════════════════════════════════════════════════════════════════
 
 def generate_reports(
@@ -342,11 +388,6 @@ def generate_reports(
     document_sections: list = None,
     log_cb=print,
 ):
-    """
-    Word / Excel / JSON raporu üret.
-    shared.py'deki generate_word, generate_excel, generate_json kullanılır
-    → tam tarama ile birebir aynı çıktı formatı ve JSON yapısı.
-    """
     import shared as sh
 
     os.makedirs(output_dir, exist_ok=True)
@@ -365,27 +406,19 @@ def generate_reports(
     if "word" in fmt_parts:
         try:
             sh.generate_word(
-                all_elements=elements,
-                page_name=page_name,
-                word_file=word_file,
-                document_sections=document_sections,
-                platform=platform,
-                screenshot_path=screenshot_path,
-            )
+                all_elements=elements, page_name=page_name, word_file=word_file,
+                document_sections=document_sections, platform=platform,
+                screenshot_path=screenshot_path)
             log_cb(f"📄 Word kaydedildi: {word_file}")
         except Exception as ex:
-            log_cb(f"⚠️  Word hatası: {ex}", )
+            log_cb(f"⚠️  Word hatası: {ex}")
 
     if "excel" in fmt_parts:
         try:
             sh.generate_excel(
-                all_elements=elements,
-                page_name=page_name,
-                excel_file=excel_file,
-                document_sections=document_sections,
-                platform=platform,
-                screenshot_path=screenshot_path,
-            )
+                all_elements=elements, page_name=page_name, excel_file=excel_file,
+                document_sections=document_sections, platform=platform,
+                screenshot_path=screenshot_path)
             log_cb(f"📊 Excel kaydedildi: {excel_file}")
         except Exception as ex:
             log_cb(f"⚠️  Excel hatası: {ex}")
@@ -393,11 +426,8 @@ def generate_reports(
     if "json" in fmt_parts:
         try:
             sh.generate_json(
-                elements=elements,
-                page_name=page_name,
-                json_file=json_file,
-                platform=platform,
-            )
+                elements=elements, page_name=page_name,
+                json_file=json_file, platform=platform)
             log_cb(f"🗂  JSON kaydedildi: {json_file}")
         except Exception as ex:
             log_cb(f"⚠️  JSON hatası: {ex}")
