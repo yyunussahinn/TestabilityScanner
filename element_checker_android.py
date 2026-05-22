@@ -118,8 +118,6 @@ _ALWAYS = [
 _CONDITIONAL = [
     "android.view.View",
     "android.view.ViewGroup",
-    "android.widget.FrameLayout",
-    "android.widget.LinearLayout",
     "android.widget.RelativeLayout",
     "android.widget.ImageView",
 ]

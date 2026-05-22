@@ -31,11 +31,6 @@ MODEL   = "claude-opus-4-5"
 
 
 def _read_api_key() -> str:
-    """
-    API key öncelik sırası:
-      1. ANTHROPIC_API_KEY environment variable
-      2. Proje klasöründeki .anthropic_key dosyası
-    """
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if key:
         return key
@@ -55,7 +50,6 @@ def _read_api_key() -> str:
 
 
 def _call_claude(messages: list, max_tokens: int = 1024) -> str:
-    """Claude API'ye istek gönder, metin yanıtı döndür."""
     api_key = _read_api_key()
 
     payload = json.dumps({
@@ -112,8 +106,6 @@ def _match_by_coordinates(elements: list, boxes: list) -> tuple[list, list]:
     """
     Koordinat bazlı eşleştirme.
     Dönüş: (matched_elements, unmatched_boxes)
-      matched_elements → rect bilgisi olan ve kutu içinde kalan elementler
-      unmatched_boxes  → hiç element düşmeyen kutular (Vision fallback için)
     """
     matched   = []
     box_hits  = [False] * len(boxes)
@@ -127,7 +119,7 @@ def _match_by_coordinates(elements: list, boxes: list) -> tuple[list, list]:
             if _point_in_box(cx, cy, box):
                 matched.append(elem)
                 box_hits[i] = True
-                break   # bir element birden fazla kutuya girmesin
+                break
 
     unmatched_boxes = [box for i, box in enumerate(boxes) if not box_hits[i]]
     return matched, unmatched_boxes
@@ -139,15 +131,12 @@ def _vision_match(elements: list, unmatched_boxes: list,
                   screenshot_path: str) -> list:
     """
     Koordinat eşleşmesi bulamadığı kutular için Claude Vision kullanır.
-    Modele: screenshot + eşleşmeyen kutu koordinatları + tüm element listesi
-    Model: hangi elementlerin o kutulara karşılık geldiğini JSON ile döner.
     """
     if not unmatched_boxes:
         return []
 
     print(f"   🔍 {len(unmatched_boxes)} kutu için Claude Vision devreye giriyor...")
 
-    # Element listesini sadeleştir (API token tasarrufu)
     elem_summary = []
     for i, e in enumerate(elements):
         elem_summary.append({
@@ -194,7 +183,6 @@ def _vision_match(elements: list, unmatched_boxes: list,
             {"role": "user", "content": user_content}
         ], max_tokens=512)
 
-        # JSON parse
         raw_clean = raw.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
         data      = json.loads(raw_clean)
         indices   = data.get("matched_indices", [])
@@ -229,7 +217,9 @@ def filter_elements_by_boxes(
         use_vision      : False → sadece koordinat eşleştirme (API gerekmez)
 
     Dönüş:
-        Eşleşen elementlerin listesi (orijinal dict yapısı korunur)
+        Eşleşen elementlerin listesi. Hiç eşleşme yoksa boş liste döner.
+        (Önceki versiyonda hiç eşleşme olmadığında tüm elementler dönüyordu —
+         bu düzeltildi. Artık annotation çizildiyse sadece işaretlenenler döner.)
     """
 
     if not boxes:
@@ -250,10 +240,9 @@ def filter_elements_by_boxes(
     coord_matched, unmatched_boxes = _match_by_coordinates(with_rect, boxes)
     print(f"   ✅ Koordinat eşleştirme: {len(coord_matched)} element bulundu.")
 
-    # Adım 2: Vision fallback
+    # Adım 2: Vision fallback (sadece eşleşemeyen kutular için)
     vision_matched = []
     if use_vision and unmatched_boxes and os.path.exists(screenshot_path):
-        # Vision fallback için tüm listeyi ver (rect olmayanlar da dahil)
         vision_matched = _vision_match(all_elements, unmatched_boxes, screenshot_path)
 
     # Birleştir, duplicate'leri temizle
@@ -266,52 +255,6 @@ def filter_elements_by_boxes(
             final.append(e)
 
     print(f"   🎯 Toplam eşleşen: {len(final)} element")
-    return final if final else all_elements   # hiç eşleşme yoksa tümünü döndür
 
-
-# ── Standalone test ──────────────────────────────────────────────────────────
-if __name__ == "__main__":
-    """
-    Test: sahte element listesi + kutular ile koordinat eşleştirmesini dene.
-    Vision API testi için gerçek screenshot ve ANTHROPIC_API_KEY gerekir.
-    """
-
-    fake_elements = [
-        {"type": "Button",    "label": "Login",           "acc_id": "btn_login",
-         "value": "", "status": "ID Var",
-         "rect": {"x": 40, "y": 260, "width": 320, "height": 50}},
-        {"type": "TextField", "label": "Email",           "acc_id": "input_email",
-         "value": "", "status": "ID Var",
-         "rect": {"x": 40, "y": 80,  "width": 320, "height": 40}},
-        {"type": "TextField", "label": "Password",        "acc_id": "",
-         "value": "", "status": "ID Yok",
-         "rect": {"x": 40, "y": 140, "width": 320, "height": 40}},
-        {"type": "Button",    "label": "Forgot Password", "acc_id": "",
-         "value": "", "status": "ID Yok",
-         "rect": {"x": 80, "y": 330, "width": 200, "height": 30}},
-        {"type": "Button",    "label": "Google ile Giriş","acc_id": "btn_google",
-         "value": "", "status": "ID Var",
-         "rect": {"x": 40, "y": 390, "width": 320, "height": 40}},
-    ]
-
-    # Annotation kutularını simüle et (email + login button)
-    test_boxes = [
-        {"x1": 30,  "y1": 70,  "x2": 380, "y2": 130},   # email input
-        {"x1": 30,  "y1": 250, "x2": 380, "y2": 320},   # login button
-        {"x1": 500, "y1": 500, "x2": 600, "y2": 550},   # hiç element yok → unmatched
-    ]
-
-    print("─" * 50)
-    print("Koordinat eşleştirme testi (Vision kapalı)")
-    print("─" * 50)
-
-    result = filter_elements_by_boxes(
-        fake_elements,
-        test_boxes,
-        screenshot_path="/tmp/nonexistent.png",
-        use_vision=False,
-    )
-
-    print(f"\nSonuç ({len(result)} element):")
-    for e in result:
-        print(f"  [{e['status']:12s}] {e['type']:12s} | {e['label']}")
+    return final
+    # ────────────────────────────────────────────────────────────────────────
