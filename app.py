@@ -1,14 +1,15 @@
 """
-Where is My Id — GUI  v4.3
+Where is My Id — GUI  v4.4
 ──────────────────────────────────────────────────────────────
-Düzeltmeler (v4.3):
-  - Footer buton sırası sabitlendi: aksiyon butonu + DURDUR
-    Tab değişiminde sıra asla bozulmuyor.
-  - annotator.py buton renkleri düzeltildi (macOS uyumlu).
+v4.4 eklemeleri:
+  - 3. tab: "📱 Session Tarama" (multi-page, tek driver oturumu)
+  - SessionTab mantık sınıfı: session_tab.py
+  - _set_session_state() — session durumuna göre buton yönetimi
 """
 
 import customtkinter as ctk
 from smart_tab import SmartTab
+from session_tab import SessionTab
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog
 import subprocess, threading, sys, os, json
@@ -22,6 +23,8 @@ ACCENT        = "#000000"
 ACCENT_DK     = "#D4A820"
 ACCENT_IOS    = "#185FA5"
 ACCENT_IOS_DK = "#0C447C"
+ACCENT_SES    = "#2D6A2D"   # Session tab rengi
+ACCENT_SES_DK = "#1a5220"
 BG_MAIN       = "#F5F0E8"
 BG_PANEL      = "#FFFFFF"
 BG_CARD       = "#F5F0E8"
@@ -186,10 +189,13 @@ class LE(ctk.CTkFrame):
 
 class Badge(ctk.CTkLabel):
     _S = {
-        "idle":    (ACCENT_DK, "○  HAZIR"),
-        "running": (ACCENT_DK, "◉  ÇALIŞIYOR"),
-        "ok":      ("green", "✓  TAMAMLANDI"),
-        "error":   ("red", "✗  HATA"),
+        "idle":       (ACCENT_DK,   "○  HAZIR"),
+        "running":    (ACCENT_DK,   "◉  ÇALIŞIYOR"),
+        "connected":  (ACCENT_SES,  "◉  OTURUM AÇIK"),
+        "collecting": (C_INF,       "⏳ TOPLANIYOR"),
+        "finishing":  (C_WRN,       "📊 RAPOR ÜRET."),
+        "ok":         ("green",     "✓  TAMAMLANDI"),
+        "error":      ("red",       "✗  HATA"),
     }
     def __init__(self, parent, **kw):
         super().__init__(parent, font=FB, corner_radius=8, padx=12, pady=4, **kw)
@@ -362,7 +368,6 @@ class App(ctk.CTk):
         self._ow_ev  = threading.Event()
         self._ow_ans = True
 
-        # Aktif tab: "tam" veya "smart"
         self._active_tab = "tam"
 
         self.title("Where is My Id")
@@ -420,51 +425,62 @@ class App(ctk.CTk):
                      font=FS, text_color="black").pack(side="left", padx=4)
         self.badge = Badge(hdr)
         self.badge.pack(side="right", padx=20)
-        ctk.CTkLabel(hdr, text="v4.3", font=FB, text_color="black").pack(side="right", padx=4)
+        ctk.CTkLabel(hdr, text="v4.4", font=FB, text_color="black").pack(side="right", padx=4)
 
     def _mk_footer(self):
         foot = ctk.CTkFrame(self, fg_color="#FFFFFF", corner_radius=0, height=66)
         foot.pack(fill="x", side="bottom")
         foot.pack_propagate(False)
 
-        # ── Sol: profil etiketi + aksiyon butonları ──────────────────────────
         lf = ctk.CTkFrame(foot, fg_color="transparent")
         lf.pack(side="left", padx=(12, 0), pady=10)
 
         self.lbl_prof = ctk.CTkLabel(lf, text="", font=FS, text_color=T_MUT)
         self.lbl_prof.pack(side="left", padx=(4, 12))
 
-        # --- FIX: Her iki aksiyon butonu da aynı parent'ta (lf) ---
-        # Sıralama her zaman: [aksiyon_btn]  [DURDUR]
-        # Tab değişiminde sadece aksiyon butonu swap edilir,
-        # DURDUR her zaman en sağda sabit kalır.
-
-        # CALISTIR (Tam Tarama)
+        # Tam Tarama butonu
         self.btn_run = ctk.CTkButton(
             lf, text="▶  CALISTIR", font=FL, height=44, width=150,
             fg_color="#1a8242", hover_color="#145c30",
             text_color="#FFFFFF", corner_radius=8,
             command=self._run_checker)
 
-        # BAĞLAN & GÖRÜNTÜ AL (Smart Tarama)
+        # Smart Tarama butonu
         self.btn_smart_connect = ctk.CTkButton(
             lf, text="📱  BAĞLAN & GÖRÜNTÜ AL", font=FL, height=44, width=220,
             fg_color=ACCENT_IOS, hover_color=ACCENT_IOS_DK,
             text_color="#FFFFFF", corner_radius=8,
             command=self._smart_connect)
 
-        # DURDUR — her iki tab için ortak, her zaman aksiyon butonunun sağında
+        # Session Tarama — Oturumu Başlat
+        self.btn_session_start = ctk.CTkButton(
+            lf, text="🔌  OTURUMU BAŞLAT", font=FL, height=44, width=200,
+            fg_color=ACCENT_SES, hover_color=ACCENT_SES_DK,
+            text_color="#FFFFFF", corner_radius=8,
+            command=self._session_start)
+
+        # Session — Sayfayı Topla
+        self.btn_session_collect = ctk.CTkButton(
+            lf, text="📥  SAYFAYI TOPLA", font=FL, height=44, width=180,
+            fg_color=ACCENT_IOS, hover_color=ACCENT_IOS_DK,
+            text_color="#FFFFFF", corner_radius=8,
+            command=self._session_collect)
+
+        # Session — Bitti
+        self.btn_session_finish = ctk.CTkButton(
+            lf, text="✅  BİTTİ - RAPOR OLUŞTUR", font=FL, height=44, width=230,
+            fg_color="#8C6A10", hover_color="#6a4e0c",
+            text_color="#FFFFFF", corner_radius=8,
+            command=self._session_finish)
+
+        # DURDUR — ortak
         self.btn_stop = ctk.CTkButton(
             lf, text="■  DURDUR", font=FL, height=44, width=120,
             fg_color="#7B1515", hover_color="#5a0f0f",
             text_color="#FFFFFF", corner_radius=8,
             command=self._stop_proc)
 
-        # Başlangıçta Tam Tarama layout: [CALISTIR] [DURDUR]
-        # _switch_tab("tam") bu düzeni kuracak
-        # (burada pack çağırmıyoruz — _switch_tab halleder)
-
-        # ── Sağ: Excel seç + Build Summary ──────────────────────────────────
+        # Sağ: Excel seç + Build Summary
         rf = ctk.CTkFrame(foot, fg_color="transparent")
         rf.pack(side="right", padx=12, pady=10)
 
@@ -507,16 +523,23 @@ class App(ctk.CTk):
         self.btn_tab_tam = ctk.CTkButton(
             tab_bar, text="📋  Tam Tarama", font=FL, height=34,
             fg_color=ACCENT_IOS, hover_color=ACCENT_IOS_DK,
-            text_color="#FFFFFF", corner_radius=7, width=180,
+            text_color="#FFFFFF", corner_radius=7, width=160,
             command=lambda: self._switch_tab("tam"))
         self.btn_tab_tam.pack(side="left", padx=(8, 4), pady=4)
 
         self.btn_tab_smart = ctk.CTkButton(
             tab_bar, text="🎯  Akıllı Tarama", font=FL, height=34,
             fg_color=BG_INPUT, hover_color="#E8E0D0",
-            text_color=T_MUT, corner_radius=7, width=180,
+            text_color=T_MUT, corner_radius=7, width=160,
             command=lambda: self._switch_tab("smart"))
         self.btn_tab_smart.pack(side="left", padx=(0, 4), pady=4)
+
+        self.btn_tab_session = ctk.CTkButton(
+            tab_bar, text="📱  Session Tarama", font=FL, height=34,
+            fg_color=BG_INPUT, hover_color="#E8E0D0",
+            text_color=T_MUT, corner_radius=7, width=170,
+            command=lambda: self._switch_tab("session"))
+        self.btn_tab_session.pack(side="left", padx=(0, 4), pady=4)
 
         # ── Sol panel — ortak ─────────────────────────────────────────────────
         self.left_panel = ctk.CTkScrollableFrame(
@@ -536,45 +559,276 @@ class App(ctk.CTk):
                                          corner_radius=10)
         self._mk_smart_log(self.right_smart)
 
-        # Başlangıç tab düzenini kur
+        # ── Sağ: Session Tarama paneli ────────────────────────────────────────
+        self.right_session = ctk.CTkFrame(self._body_frame, fg_color="#F5F0E8",
+                                           corner_radius=10)
+        self._mk_session_panel(self.right_session)
+
         self._switch_tab("tam", init=True)
 
-    # ── Tab değiştirme — FIX ─────────────────────────────────────────────────
+    # ── Tab değiştirme ────────────────────────────────────────────────────────
     def _switch_tab(self, tab: str, init: bool = False):
         self._active_tab = tab
 
-        # Her iki aksiyon butonunu önce gizle
         self.btn_run.pack_forget()
         self.btn_smart_connect.pack_forget()
+        self.btn_session_start.pack_forget()
+        self.btn_session_collect.pack_forget()
+        self.btn_session_finish.pack_forget()
         self.btn_stop.pack_forget()
 
-        if tab == "tam":
-            # Tab buton renkleri
-            self.btn_tab_tam.configure(fg_color=ACCENT_IOS, hover_color=ACCENT_IOS_DK,
-                                        text_color="#FFFFFF")
-            self.btn_tab_smart.configure(fg_color=BG_INPUT, hover_color="#E8E0D0",
-                                          text_color=T_MUT)
-            # Sağ panel
-            if not init:
-                self.right_smart.grid_remove()
-            self.right_tam.grid(row=1, column=1, sticky="nsew")
+        # Tab buton renkleri sıfırla
+        for btn, t in [(self.btn_tab_tam,     "tam"),
+                       (self.btn_tab_smart,   "smart"),
+                       (self.btn_tab_session, "session")]:
+            if t == tab:
+                col = ACCENT_SES if t == "session" else ACCENT_IOS
+                dk  = ACCENT_SES_DK if t == "session" else ACCENT_IOS_DK
+                btn.configure(fg_color=col, hover_color=dk, text_color="#FFFFFF")
+            else:
+                btn.configure(fg_color=BG_INPUT, hover_color="#E8E0D0", text_color=T_MUT)
 
-            # Footer: [CALISTIR] [DURDUR]  — sabit sıra
+        # Panel görünürlüğü
+        for panel in [self.right_tam, self.right_smart, self.right_session]:
+            panel.grid_remove()
+
+        if tab == "tam":
+            self.right_tam.grid(row=1, column=1, sticky="nsew")
             self.btn_run.pack(side="left", padx=(0, 6))
             self.btn_stop.pack(side="left")
 
-        else:  # smart
-            self.btn_tab_smart.configure(fg_color=ACCENT_IOS, hover_color=ACCENT_IOS_DK,
-                                          text_color="#FFFFFF")
-            self.btn_tab_tam.configure(fg_color=BG_INPUT, hover_color="#E8E0D0",
-                                        text_color=T_MUT)
-            # Sağ panel
-            self.right_tam.grid_remove()
+        elif tab == "smart":
             self.right_smart.grid(row=1, column=1, sticky="nsew")
-
-            # Footer: [BAĞLAN & GÖRÜNTÜ AL] [DURDUR]  — sabit sıra
             self.btn_smart_connect.pack(side="left", padx=(0, 6))
             self.btn_stop.pack(side="left")
+
+        else:  # session
+            self.right_session.grid(row=1, column=1, sticky="nsew")
+            self._refresh_session_footer()
+            # DURDUR her zaman en sağda
+            self.btn_stop.pack(side="left")
+
+    def _refresh_session_footer(self):
+        """Session durumuna göre footer butonlarını ayarla."""
+        self.btn_session_start.pack_forget()
+        self.btn_session_collect.pack_forget()
+        self.btn_session_finish.pack_forget()
+
+        if not hasattr(self, '_session_ref'):
+            self.btn_session_start.pack(side="left", padx=(0, 6))
+            return
+
+        st = getattr(self, '_session_state', 'idle')
+        if st == "idle":
+            self.btn_session_start.pack(side="left", padx=(0, 6))
+        elif st in ("connected", "collecting"):
+            self.btn_session_collect.pack(side="left", padx=(0, 6))
+            self.btn_session_finish.pack(side="left", padx=(0, 6))
+        # finishing → hiçbiri (bekle)
+
+    # ── Session state yönetimi ────────────────────────────────────────────────
+    def _set_session_state(self, state: str):
+        """
+        state: "idle" | "connected" | "collecting" | "finishing"
+        """
+        self._session_state = state
+
+        if state == "idle":
+            self.badge.set("idle")
+            self.btn_stop.configure(state="disabled")
+            self.btn_summary.configure(state="normal")
+            # Akış adı inputunu sıfırla
+            if hasattr(self, '_flow_entry'):
+                self._flow_entry.configure(state="normal", fg_color=BG_INPUT)
+                self._flow_active_label.configure(text="")
+        elif state == "connected":
+            self.badge.set("connected")
+            self.btn_stop.configure(state="normal")
+            self.btn_summary.configure(state="disabled")
+            # Her iki butonu da aktif et
+            self.btn_session_collect.configure(state="normal",
+                fg_color=ACCENT_IOS, hover_color=ACCENT_IOS_DK)
+            self.btn_session_finish.configure(state="normal",
+                fg_color="#8C6A10", hover_color="#6a4e0c")
+        elif state == "collecting":
+            self.badge.set("collecting")
+            self.btn_session_collect.configure(state="disabled",
+                fg_color="#9E9E9E")
+            self.btn_session_finish.configure(state="disabled",
+                fg_color="#9E9E9E")
+        elif state == "finishing":
+            self.badge.set("finishing")
+            self.btn_session_collect.configure(state="disabled",
+                fg_color="#9E9E9E")
+            self.btn_session_finish.configure(state="disabled",
+                fg_color="#9E9E9E")
+            self.btn_stop.configure(state="disabled")
+
+        if self._active_tab == "session":
+            self._refresh_session_footer()
+
+    # ── Session panel ─────────────────────────────────────────────────────────
+    def _mk_session_panel(self, p):
+        p.rowconfigure(0, weight=0)
+        p.rowconfigure(1, weight=0)
+        p.rowconfigure(2, weight=1)
+        p.rowconfigure(3, weight=0)
+        p.columnconfigure(0, weight=1)
+
+        # Başlık
+        hdr = ctk.CTkFrame(p, fg_color="white", corner_radius=0, height=36)
+        hdr.grid(row=0, column=0, sticky="ew")
+        hdr.grid_propagate(False)
+        ctk.CTkLabel(hdr, text="SESSION TARAMA  [Akış Bazlı]",
+                     font=FB, text_color=ACCENT_SES).pack(side="left", padx=14)
+        ctk.CTkLabel(hdr,
+                     text="Akış adı gir → Oturumu başlat → her sayfadan sonra Topla → Bitti",
+                     font=FS, text_color=T_MUT).pack(side="left", padx=8)
+        ctk.CTkButton(hdr, text="Temizle", font=FS, width=70, height=24,
+                      fg_color="#7B1515", hover_color="#5a0f0f",
+                      text_color="white", corner_radius=6,
+                      command=self._clear_session_log).pack(side="right", padx=10, pady=5)
+
+        # Akış adı input satırı (sadece oturum başlarken kullanılır)
+        inp = ctk.CTkFrame(p, fg_color=BG_CARD, corner_radius=0, height=46)
+        inp.grid(row=1, column=0, sticky="ew")
+        inp.grid_propagate(False)
+
+        ctk.CTkLabel(inp, text="Akış adı:", font=FL,
+                     text_color="black").pack(side="left", padx=(14, 6), pady=8)
+        self.v_session_flow = tk.StringVar()
+        self._flow_entry = ctk.CTkEntry(
+            inp, textvariable=self.v_session_flow,
+            placeholder_text="loyalty, booking, search...",
+            fg_color=BG_INPUT, border_color=ACCENT_SES,
+            text_color=T_PRI, font=FL, width=220, corner_radius=6)
+        self._flow_entry.pack(side="left", pady=8)
+        self._flow_entry.bind("<Return>", lambda e: self._session_start())
+
+        # Aktif akış etiketi (oturum açıldıktan sonra gösterilir)
+        self._flow_active_label = ctk.CTkLabel(
+            inp, text="", font=FB, text_color=ACCENT_SES)
+        self._flow_active_label.pack(side="left", padx=(16, 0), pady=8)
+
+        # Özet tablo alanı
+        tbl_outer = ctk.CTkFrame(p, fg_color=BG_MAIN, corner_radius=0)
+        tbl_outer.grid(row=2, column=0, sticky="nsew", padx=0, pady=0)
+        tbl_outer.rowconfigure(1, weight=1)
+        tbl_outer.columnconfigure(0, weight=1)
+
+        tbl_hdr = ctk.CTkFrame(tbl_outer, fg_color=ACCENT_SES, corner_radius=0, height=28)
+        tbl_hdr.grid(row=0, column=0, sticky="ew")
+        tbl_hdr.grid_propagate(False)
+        for col_txt, w in [("TARAMA", 200), ("✓ Unique", 70),
+                            ("⚠ Undef", 70), ("🔁 Dup", 70),
+                            ("✗ Miss", 70), ("Toplam", 70)]:
+            ctk.CTkLabel(tbl_hdr, text=col_txt, font=FB,
+                         text_color="white", width=w,
+                         anchor="center").pack(side="left", padx=2)
+
+        # Tablo scroll alanı
+        self._session_table_frame = ctk.CTkScrollableFrame(
+            tbl_outer, fg_color=BG_PANEL, corner_radius=0,
+            scrollbar_button_color="#D8D0C0")
+        self._session_table_frame.grid(row=1, column=0, sticky="nsew")
+
+        # Log alanı (alt %30)
+        self.session_log_box = ctk.CTkTextbox(
+            p, fg_color="#FAFAF7", text_color=T_PRI,
+            font=FLG, corner_radius=0, wrap="word",
+            scrollbar_button_color="#D8D0C0", height=160)
+        self.session_log_box.grid(row=3, column=0, sticky="ew")
+        for tag, col in [("ok", C_OK), ("err", C_ERR),
+                          ("warn", C_WRN), ("info", C_INF), ("dim", T_MUT)]:
+            self.session_log_box._textbox.tag_config(tag, foreground=col)
+
+        # SessionTab logic nesnesi
+        self._session_ref = SessionTab(self)
+        self._session_ref.bind_log(self.session_log_box)
+        self._session_ref.bind_table_callback(self._update_session_table)
+        self._session_state = "idle"
+
+    def _update_session_table(self):
+        """Özet tabloyu session_ref'teki page_summary'den yenile."""
+        # Eski satırları temizle
+        for w in self._session_table_frame.winfo_children():
+            w.destroy()
+
+        summary = self._session_ref.summary
+        if not summary:
+            ctk.CTkLabel(self._session_table_frame,
+                         text="Henüz tarama yapılmadı.",
+                         font=FS, text_color=T_MUT).pack(pady=20)
+            return
+
+        totals = {"unique": 0, "undefined": 0, "duplicate": 0, "missing": 0, "total": 0}
+
+        for i, s in enumerate(summary):
+            bg = BG_PANEL if i % 2 == 0 else BG_CARD
+            row = ctk.CTkFrame(self._session_table_frame,
+                               fg_color=bg, corner_radius=0, height=28)
+            row.pack(fill="x")
+            row.pack_propagate(False)
+
+            vals = [
+                (s["label"],     200, T_PRI,     True),
+                (s["unique"],     70, C_OK,      False),
+                (s["undefined"],  70, C_WRN,     False),
+                (s["duplicate"],  70, "#7B3F00", False),
+                (s["missing"],    70, C_ERR,     False),
+                (s["total"],      70, T_PRI,     True),
+            ]
+            for val, w, col, bold in vals:
+                ctk.CTkLabel(row, text=str(val), font=FB if bold else FS,
+                             text_color=col, width=w,
+                             anchor="center").pack(side="left", padx=2)
+
+            for k in totals:
+                totals[k] += s.get(k, 0)
+
+        # Toplam satırı
+        flow = self._session_ref.flow_name if hasattr(self, '_session_ref') else ""
+        tot_row = ctk.CTkFrame(self._session_table_frame,
+                               fg_color=ACCENT_SES, corner_radius=0, height=28)
+        tot_row.pack(fill="x", pady=(2, 0))
+        tot_row.pack_propagate(False)
+        tot_vals = [
+            (f"{flow}  ({len(summary)} tarama)", 200, "white", True),
+            (totals["unique"],     70, "white", True),
+            (totals["undefined"],  70, "white", True),
+            (totals["duplicate"],  70, "white", True),
+            (totals["missing"],    70, "white", True),
+            (totals["total"],      70, "white", True),
+        ]
+        for val, w, col, bold in tot_vals:
+            ctk.CTkLabel(tot_row, text=str(val), font=FB if bold else FS,
+                         text_color=col, width=w,
+                         anchor="center").pack(side="left", padx=2)
+
+    def _clear_session_log(self):
+        self.session_log_box.configure(state="normal")
+        self.session_log_box.delete("1.0", "end")
+        self.session_log_box.configure(state="disabled")
+
+    # ── Session aksiyonları ───────────────────────────────────────────────────
+    def _session_start(self):
+        if hasattr(self, '_session_ref'):
+            flow = self.v_session_flow.get().strip()
+            if not flow:
+                messagebox.showwarning("Akış Adı", "Önce akış adını girin (örn: loyalty, booking).")
+                return
+            # Oturum açıldıktan sonra input'u kapat, aktif etiketi göster
+            self._flow_entry.configure(state="disabled", fg_color="#D8D0C0")
+            self._flow_active_label.configure(text=f"● Aktif akış: {flow}")
+            self._session_ref.start_session(flow)
+
+    def _session_collect(self):
+        if hasattr(self, '_session_ref'):
+            self._session_ref.collect_page()
+
+    def _session_finish(self):
+        if hasattr(self, '_session_ref'):
+            self._session_ref.finish_session()
 
     # ── Smart connect ─────────────────────────────────────────────────────────
     def _smart_connect(self):
@@ -607,7 +861,6 @@ class App(ctk.CTk):
                           ("warn", C_WRN), ("info", C_INF), ("dim", T_MUT)]:
             self.smart_log_box._textbox.tag_config(tag, foreground=col)
 
-        # Sayfa adı input frame
         self.smart_page_frame = ctk.CTkFrame(p, fg_color=BG_CARD,
                                               corner_radius=0, height=50)
         self.smart_page_frame.grid(row=2, column=0, sticky="ew")
@@ -629,7 +882,6 @@ class App(ctk.CTk):
                       text_color=BG_MAIN, corner_radius=6,
                       command=self._smart_submit_page).pack(side="left", padx=10, pady=10)
 
-        # SmartTab logic nesnesi
         self._smart_tab_ref = SmartTab(self)
         self._smart_tab_ref.bind_to_log(self.smart_log_box)
         self._smart_tab_ref.bind_page_frame(
@@ -648,7 +900,6 @@ class App(ctk.CTk):
     def _mk_config(self, p):
         pad = dict(padx=14, pady=3)
 
-        # Platform toggle
         SecHdr(p, "PLATFORM").pack(fill="x", **pad)
         pf = ctk.CTkFrame(p, fg_color="#EDE8DF", corner_radius=8)
         pf.pack(fill="x", padx=14, pady=(0, 8))
@@ -663,14 +914,12 @@ class App(ctk.CTk):
             command=lambda: self._toggle_platform("android"))
         self.btn_and.pack(side="left", expand=True, fill="x", padx=(3, 6), pady=6)
 
-        # Genel ayarlar
         SecHdr(p, "GENEL AYARLAR").pack(fill="x", **pad)
         LE(p, "Appium Server", self.v_appium,
            "http://127.0.0.1:4723").pack(fill="x", padx=14, pady=3)
         LE(p, "Cikti Klasoru", self.v_out_dir,
            "/path/to/output", browse_dir=True).pack(fill="x", padx=14, pady=3)
 
-        # Çıktı Formatı
         fmt_row = ctk.CTkFrame(p, fg_color="transparent")
         fmt_row.pack(fill="x", padx=14, pady=3)
         ctk.CTkLabel(fmt_row, text="Cikti Formati", font=FS,
@@ -682,15 +931,13 @@ class App(ctk.CTk):
             ("📊 Excel", self.v_out_excel, "#2D6A2D"),
             ("🗂 JSON",  self.v_out_json,  "#8C6A10"),
         ]:
-            cb = ctk.CTkCheckBox(
+            ctk.CTkCheckBox(
                 fmt_box, text=lbl, variable=var, font=FS,
                 text_color=T_PRI, fg_color=color, hover_color=color,
                 checkmark_color="#FFFFFF", border_color="#B0A898",
                 command=self._validate_output_format,
-            )
-            cb.pack(anchor="w", padx=(10, 6), pady=6)
+            ).pack(anchor="w", padx=(10, 6), pady=6)
 
-        # Rapor bölümleri
         SecHdr(p, "RAPOR BOLUMLERI").pack(fill="x", **pad)
         sf = ctk.CTkFrame(p, fg_color="#EDE8DF", corner_radius=8)
         sf.pack(fill="x", padx=14, pady=(0, 8))
@@ -705,7 +952,6 @@ class App(ctk.CTk):
                             checkmark_color="#1a8242", border_color="#B0A898"
                             ).pack(anchor="w", padx=12, pady=4)
 
-        # iOS profil paneli
         self.ios_hdr = SecHdr(p, "IOS AYARLARI", color=ACCENT)
         self.ios_hdr.pack(fill="x", **pad)
         self.ios_panel = ProfilePanel(
@@ -715,7 +961,6 @@ class App(ctk.CTk):
             on_change=self._ios_changed)
         self.ios_panel.pack(fill="x", pady=(0, 6))
 
-        # Android profil paneli
         self.and_hdr = SecHdr(p, "ANDROID AYARLARI", color=ACCENT)
         self.and_hdr.pack(fill="x", **pad)
         self.and_panel = ProfilePanel(
@@ -725,7 +970,6 @@ class App(ctk.CTk):
             on_change=self._and_changed)
         self.and_panel.pack(fill="x", pady=(0, 6))
 
-        # Blacklist
         self.bl_hdr = SecHdr(p, "BLACKLIST ID'LER")
         self.bl_hdr.pack(fill="x", **pad)
         self.bl_frame = ctk.CTkFrame(p, fg_color="transparent")
@@ -1153,6 +1397,8 @@ class App(ctk.CTk):
             self._log("Process durduruldu.", "warn")
         if hasattr(self, '_smart_tab_ref') and self._smart_tab_ref:
             self._smart_tab_ref.stop()
+        if hasattr(self, '_session_ref') and self._session_ref:
+            self._session_ref.abort_session()
         self._set_busy(False)
         self.badge.set("idle")
         self._pn_ev.set()
@@ -1163,6 +1409,9 @@ class App(ctk.CTk):
     def on_close(self):
         if self._proc:
             self._proc.terminate()
+        # Açık session varsa kapat
+        if hasattr(self, '_session_ref') and self._session_ref:
+            self._session_ref.abort_session()
         save_config(self._collect())
         self.destroy()
 
