@@ -1,20 +1,15 @@
 """
-session_tab.py — Where is My Id  v1.1
+session_tab.py — Where is My Id  v1.1  (i18n)
 ────────────────────────────────────────────────────────────────
 Multi-page session tarama mantığı.
-
-v1.1: Akış bazlı toplama
-  - Oturum açılırken bir kere akış adı girilir (örn: "loyalty")
-  - Her "Sayfayı Topla" işlemi otomatik numaralanır:
-      loyalty - tarama 1, loyalty - tarama 2, ...
-  - Tablo'da her tarama ayrı satır gösterilir
-  - Excel/Word'e yazarken hepsi tek sheet/dosya altında toplanır (flow_name)
+Tüm log ve hata mesajları i18n.t() üzerinden yönetilir.
 """
 
 import threading
 import os
 from datetime import datetime
 from collections import Counter
+from i18n import t
 
 
 class SessionTab:
@@ -28,17 +23,12 @@ class SessionTab:
         self._running        = False
         self._collecting     = False
 
-        # Akış bilgisi
-        self._flow_name      = ""   # kullanıcının girdiği akış adı (örn: "loyalty")
-        self._scan_counter   = 0    # kaçıncı tarama (1'den başlar)
+        self._flow_name      = ""
+        self._scan_counter   = 0
 
-        # Biriken veriler
-        # element'lerin "page" field'ı → "loyalty - tarama 1" gibi etiket taşır
-        # ama Excel sheet adı her zaman self._flow_name olur
         self._all_elements:  list[dict] = []
-        self._page_summary:  list[dict] = []  # [{label, unique, undefined, duplicate, missing, total, ss_path}]
+        self._page_summary:  list[dict] = []
 
-        # Bağlanan widget'lar (app.py set eder)
         self._log_box         = None
         self._update_table_cb = None
 
@@ -63,33 +53,31 @@ class SessionTab:
 
     # ── Oturumu Başlat ────────────────────────────────────────────────────────
     def start_session(self, flow_name: str):
-        """Footer 'OTURUMU BAŞLAT' butonundan flow_name ile çağrılır."""
         if self._driver:
-            self._log("⚠️  Zaten aktif bir oturum var. Önce 'Bitti' ile kapatın.", "warn")
+            self._log(t("session_log_active_session"), "warn")
             return
 
         if not flow_name.strip():
-            self._log("❌ Akış adı boş olamaz!", "err")
+            self._log(t("session_log_flow_empty"), "err")
             return
 
         pf = self.app.v_platform.get()
         if pf == "ios":
             profile = self.app.ios_panel.get_data()
             if not profile.get("bundle_id"):
-                self._log("❌ iOS Bundle ID boş!", "err")
+                self._log(t("session_log_ios_empty"), "err")
                 return
         else:
             profile = self.app.and_panel.get_data()
             if not profile.get("app_package"):
-                self._log("❌ Android App Package boş!", "err")
+                self._log(t("session_log_and_empty"), "err")
                 return
 
         output_dir = self.app.v_out_dir.get().strip()
         if not output_dir:
-            self._log("❌ Çıktı klasörü boş!", "err")
+            self._log(t("session_log_output_empty"), "err")
             return
 
-        # State sıfırla
         self._flow_name    = flow_name.strip()
         self._scan_counter = 0
         self._all_elements.clear()
@@ -101,9 +89,9 @@ class SessionTab:
         self._running  = True
         self.app.after(0, lambda: self.app._set_session_state("connected"))
 
-        self._log(f"{'='*50}", "dim")
-        self._log(f"🔌 Oturum başlatılıyor... ({pf.upper()})", "info")
-        self._log(f"   Akış adı: {self._flow_name}", "info")
+        self._log(t("session_log_sep"), "dim")
+        self._log(t("session_log_connecting", platform=pf.upper()), "info")
+        self._log(t("session_log_flow", flow=self._flow_name), "info")
 
         threading.Thread(
             target=self._connect_worker,
@@ -138,7 +126,6 @@ class SessionTab:
 
             self._driver = webdriver.Remote(appium_server, options=options)
 
-            # iOS pixel ratio
             if platform == "ios":
                 try:
                     import tempfile, os as _os
@@ -151,40 +138,38 @@ class SessionTab:
                     win = self._driver.get_window_size()
                     pt_w = win.get("width", ss_w)
                     self._pixel_ratio = ss_w / pt_w if pt_w > 0 else 1.0
-                    self._log(f"   pixel_ratio: {self._pixel_ratio:.1f}x", "dim")
+                    self._log(t("session_log_pixel_ratio", ratio=self._pixel_ratio), "dim")
                 except Exception:
                     self._pixel_ratio = 1.0
             else:
                 self._pixel_ratio = 1.0
 
-            self._log("✅ Appium bağlandı!", "ok")
-            self._log(f"   → Uygulamada ilk sayfayı açın ve 'Sayfayı Topla'ya basın.", "dim")
-            self._log(f"   → Her sayfadan sonra tekrar 'Sayfayı Topla'ya basın.", "dim")
-            self._log(f"   → Bitince 'Bitti - Rapor Oluştur'a basın.", "dim")
+            self._log(t("session_log_connected"), "ok")
+            self._log(t("session_log_hint1"), "dim")
+            self._log(t("session_log_hint2"), "dim")
+            self._log(t("session_log_hint3"), "dim")
 
         except Exception as ex:
-            self._log(f"❌ Bağlantı hatası: {ex}", "err")
+            self._log(t("session_log_conn_error", error=ex), "err")
             self._driver  = None
             self._running = False
             self.app.after(0, lambda: self.app._set_session_state("idle"))
 
     # ── Sayfayı Topla ─────────────────────────────────────────────────────────
     def collect_page(self):
-        """'Sayfayı Topla' butonundan çağrılır. Akış adı zaten set edilmiş."""
         if not self._driver:
-            self._log("❌ Önce 'Oturumu Başlat' ile Appium'a bağlanın.", "err")
+            self._log(t("session_log_ios_empty"), "err")
             return
         if self._collecting:
-            self._log("⏳ Zaten toplama işlemi devam ediyor, bekleyin.", "warn")
+            self._log(t("session_log_active_session"), "warn")
             return
 
         self._scan_counter += 1
-        # Tablo etiketi: "loyalty - tarama 1"
         scan_label = f"{self._flow_name} - tarama {self._scan_counter}"
 
         self._collecting = True
         self.app.after(0, lambda: self.app._set_session_state("collecting"))
-        self._log(f"─── {scan_label} ─── element taranıyor...", "info")
+        self._log(t("session_log_scanning", label=scan_label), "info")
 
         threading.Thread(
             target=self._collect_worker,
@@ -200,7 +185,6 @@ class SessionTab:
             ss_dir     = os.path.join(output_dir, f"screenshots_{self._platform}")
             os.makedirs(ss_dir, exist_ok=True)
             ts         = datetime.now().strftime("%Y%m%d_%H%M%S")
-            # Screenshot dosya adında scan_label'i temizle (dosya adı uyumlu)
             safe_label = scan_label.replace(" ", "_").replace("-", "").replace("/", "_")
             ss_path    = os.path.join(ss_dir, f"{safe_label}_{ts}.png")
             self._driver.get_screenshot_as_file(ss_path)
@@ -210,17 +194,15 @@ class SessionTab:
 
             elements = sc._collect_elements(
                 self._driver, self._platform,
-                scan_label,   # element'lerin "page" field'ı bu etiketi taşır
+                scan_label,
                 sw, sh, self._pixel_ratio,
                 self._log
             )
 
-            # page field'ı scan_label (tablo görünümü için)
             for e in elements:
                 e["page"]      = scan_label
-                e["flow_name"] = self._flow_name   # Excel sheet adı için
+                e["flow_name"] = self._flow_name
 
-            # AI Suggestion
             import shared as shr
             elements = shr.enrich_with_ai(elements, self._platform)
 
@@ -228,8 +210,8 @@ class SessionTab:
 
             counts = Counter(e["status"] for e in elements)
             summary = {
-                "label":     scan_label,        # tablo satır etiketi
-                "flow":      self._flow_name,   # Excel sheet adı
+                "label":     scan_label,
+                "flow":      self._flow_name,
                 "unique":    counts["ID Var"],
                 "undefined": counts["Undefined ID"],
                 "duplicate": counts["Duplicate"],
@@ -240,12 +222,13 @@ class SessionTab:
             self._page_summary.append(summary)
 
             self._log(
-                f"✅ {scan_label}: "
-                f"✓{summary['unique']} "
-                f"⚠{summary['undefined']} "
-                f"🔁{summary['duplicate']} "
-                f"✗{summary['missing']} "
-                f"(toplam {summary['total']})",
+                t("session_log_scan_ok",
+                  label=scan_label,
+                  unique=summary["unique"],
+                  undefined=summary["undefined"],
+                  duplicate=summary["duplicate"],
+                  missing=summary["missing"],
+                  total=summary["total"]),
                 "ok"
             )
 
@@ -256,9 +239,8 @@ class SessionTab:
 
         except Exception as ex:
             import traceback
-            self._log(f"❌ Toplama hatası: {ex}", "err")
+            self._log(t("session_log_collect_error", error=ex), "err")
             self._log(traceback.format_exc(), "err")
-            # Sayacı geri al (başarısız tarama numarayı yakmamalı)
             self._scan_counter -= 1
             self.app.after(0, lambda: self.app._set_session_state("connected"))
         finally:
@@ -267,15 +249,17 @@ class SessionTab:
     # ── Bitti - Rapor Oluştur ─────────────────────────────────────────────────
     def finish_session(self):
         if not self._all_elements:
-            self._log("⚠️  Hiç element toplanmadı. Önce 'Sayfayı Topla' kullanın.", "warn")
+            self._log(t("session_log_no_elements"), "warn")
             return
 
         self.app.after(0, lambda: self.app._set_session_state("finishing"))
         total_scans = len(self._page_summary)
-        self._log(f"{'='*50}", "dim")
+        self._log(t("session_log_sep"), "dim")
         self._log(
-            f"📊 Rapor oluşturuluyor... "
-            f"({len(self._all_elements)} element, {total_scans} tarama, akış: {self._flow_name})",
+            t("session_log_report_gen",
+              total=len(self._all_elements),
+              scans=total_scans,
+              flow=self._flow_name),
             "info"
         )
 
@@ -286,7 +270,7 @@ class SessionTab:
             if self._driver:
                 try:
                     self._driver.quit()
-                    self._log("🔌 Driver kapatıldı.", "dim")
+                    self._log(t("session_log_driver_closed"), "dim")
                 except Exception:
                     pass
                 self._driver = None
@@ -306,12 +290,10 @@ class SessionTab:
             ts           = datetime.now().strftime("%Y%m%d_%H%M%S")
             flow_safe    = self._flow_name.replace(" ", "_")
 
-            # EXCEL — var olan dosyaya yeni sheet ekle (yoksa yeni dosya oluştur)
             if "excel" in fmt_parts:
                 excel_file = os.path.join(
                     output_dir, f"Session_{flow_safe}_{plat_suffix}.xlsx")
 
-                # Oturum numarasını belirle: dosyada kaç "{flow_name}" içeren sheet varsa +1
                 import openpyxl as _opxl
                 if os.path.exists(excel_file):
                     _wb_check = _opxl.load_workbook(excel_file, read_only=True)
@@ -325,7 +307,7 @@ class SessionTab:
                 sheet_name = (self._flow_name if session_num == 1
                               else f"{self._flow_name} - oturum {session_num}")
 
-                self._log(f"   Sheet adı: '{sheet_name}'", "dim")
+                self._log(t("session_log_sheet_name", name=sheet_name), "dim")
 
                 STATUS_ORDER = {
                     "ID Var":       0,
@@ -342,8 +324,6 @@ class SessionTab:
                         key=lambda e: STATUS_ORDER.get(e.get("status", ""), 99))
 
                     if first_scan:
-                        # İlk tarama: sheet'i generate_excel ile oluştur
-                        # (dosya yoksa yeni dosya, varsa mevcut dosyaya yeni sheet)
                         shr.generate_excel(
                             all_elements=scan_elems,
                             page_name=sheet_name,
@@ -354,20 +334,20 @@ class SessionTab:
                         )
                         first_scan = False
                     else:
-                        # Sonraki taramalar: aynı sheet'e satır ekle
                         self._append_scan_rows(
                             excel_file, sheet_name, scan_elems,
                             doc_sections, shr)
 
-                # Tüm tarama screenshotlarını Excel'e alt alta ekle
                 self._append_screenshots_to_excel(excel_file, sheet_name)
-                self._log(f"📊 Excel kaydedildi: {excel_file}  (sheet: {sheet_name})", "ok")
+                self._log(t("session_log_excel_saved",
+                             file=excel_file, sheet=sheet_name), "ok")
 
-            # WORD — her tarama ayrı dosya
             if "word" in fmt_parts:
                 for s in self._page_summary:
-                    scan_elems  = [e for e in self._all_elements if e.get("page") == s["label"]]
-                    safe_lbl    = s["label"].replace(" ", "_").replace("-", "").replace("/", "_")
+                    scan_elems  = [e for e in self._all_elements
+                                   if e.get("page") == s["label"]]
+                    safe_lbl    = (s["label"].replace(" ", "_")
+                                   .replace("-", "").replace("/", "_"))
                     word_file   = os.path.join(
                         output_dir, f"{safe_lbl}_{plat_suffix}.docx")
                     shr.generate_word(
@@ -378,12 +358,13 @@ class SessionTab:
                         platform=self._platform,
                         screenshot_path=s.get("ss_path", ""),
                     )
-                    self._log(f"📄 Word: {os.path.basename(word_file)}", "ok")
+                    self._log(t("session_log_word_saved",
+                                 file=os.path.basename(word_file)), "ok")
 
-            # JSON — tüm unique elementler tek dosya
             if "json" in fmt_parts:
                 json_file = os.path.join(
-                    output_dir, f"Session_{flow_safe}_{self._platform}_{ts}.json")
+                    output_dir,
+                    f"Session_{flow_safe}_{self._platform}_{ts}.json")
                 shr.generate_json(
                     elements=self._all_elements,
                     page_name=self._flow_name,
@@ -391,18 +372,19 @@ class SessionTab:
                     platform=self._platform,
                 )
 
-            self._log(f"{'='*50}", "dim")
+            self._log(t("session_log_sep"), "dim")
             self._log(
-                f"✅ Tamamlandı! Akış: {self._flow_name}  |  "
-                f"{len(self._page_summary)} tarama  |  "
-                f"{len(self._all_elements)} element",
+                t("session_log_done",
+                  flow=self._flow_name,
+                  scans=len(self._page_summary),
+                  total=len(self._all_elements)),
                 "ok"
             )
             self.app.after(0, lambda: self.app.badge.set("ok"))
 
         except Exception as ex:
             import traceback
-            self._log(f"❌ Rapor hatası: {ex}", "err")
+            self._log(t("session_log_report_error", error=ex), "err")
             self._log(traceback.format_exc(), "err")
             self.app.after(0, lambda: self.app.badge.set("error"))
         finally:
@@ -411,35 +393,19 @@ class SessionTab:
             self.app.after(0, lambda: self.app._set_session_state("idle"))
 
     # ── Sonraki tarama satırlarını mevcut sheet'e ekle ───────────────────────
-    def _append_scan_rows(self, excel_file, sheet_name, scan_elems, doc_sections, shr):
-        """
-        İlk tarama generate_excel ile yazıldı. Sonraki taramaların elementlerini
-        mevcut sheet'in sonuna ekler — başlık satırı yazmadan.
-        Stil için shared.py'deki yardımcı fonksiyonları kullanır.
-        """
+    def _append_scan_rows(self, excel_file, sheet_name, scan_elems,
+                           doc_sections, shr):
         import openpyxl
         from openpyxl.styles import Font, Alignment
-        from openpyxl.utils import get_column_letter
 
         wb  = openpyxl.load_workbook(excel_file)
         ws  = wb[sheet_name]
 
-        # Mevcut son satırı bul
         last_row = ws.max_row + 1
+        ordered  = shr._build_ordered(scan_elems, doc_sections)
 
-        # Elementleri sıralı yaz
-        ordered = shr._build_ordered(scan_elems, doc_sections)
-        # _build_ordered zaten status sırasına göre grupluyor — ama scan_elems
-        # tek bir taramaya ait olduğu için gruplar tarama içinde kalır. ✓
+        data_rows_so_far = max(0, last_row - 3)
 
-        # Mevcut satır sayısından element index başlat (numaralama için)
-        # idx için sayfadaki veri satır sayısını hesapla (başlık 2 satır)
-        data_rows_so_far = last_row - 3  # 2 başlık + 1 offset
-        if data_rows_so_far < 0:
-            data_rows_so_far = 0
-
-        plat = self._platform
-        acc_col  = "Accessibility ID" if plat == "ios" else "Resource ID"
         COL_KEYS = ["element_id", "page", "type", "label", "value",
                     "acc_id", "status", "new_status", "ai_suggestion"]
 
@@ -459,7 +425,8 @@ class SessionTab:
                 val = shr._get_val(elem, key, elem_id, new_status)
                 c   = ws.cell(row=row_num, column=ci, value=val)
                 c.border = shr.BORDER
-                shr._style_excel_cell(c, key, pal, r_fill, ns_fill, ai_fill, new_status)
+                shr._style_excel_cell(c, key, pal, r_fill, ns_fill,
+                                       ai_fill, new_status)
 
             ws.row_dimensions[row_num].height = 60
 
@@ -467,12 +434,6 @@ class SessionTab:
 
     # ── Screenshotları Excel'e ekle ───────────────────────────────────────────
     def _append_screenshots_to_excel(self, excel_file: str, sheet_name: str):
-        """
-        self._page_summary içindeki tüm ss_path'leri,
-        mevcut sheet'teki veri sütunlarının sağına alt alta ekler.
-        Her screenshot üstünde "📸 loyalty - tarama N" etiketi olur.
-        Aralarında 2 satır boşluk bırakır.
-        """
         try:
             import openpyxl
             from openpyxl.drawing.image import Image as XLImage
@@ -481,7 +442,7 @@ class SessionTab:
 
             wb = openpyxl.load_workbook(excel_file)
             if sheet_name not in wb.sheetnames:
-                self._log(f"⚠️  Sheet '{sheet_name}' bulunamadı, screenshot eklenemedi.", "warn")
+                self._log(t("session_log_sheet_missing", sheet=sheet_name), "warn")
                 return
             ws = wb[sheet_name]
 
@@ -511,38 +472,38 @@ class SessionTab:
 
                     tmp_path = ss_path.replace(".png", "_xl_tmp.png")
                     with PILImage.open(ss_path) as img:
-                        img.resize((target_w, target_h), PILImage.LANCZOS).save(tmp_path, "PNG")
+                        img.resize((target_w, target_h),
+                                   PILImage.LANCZOS).save(tmp_path, "PNG")
                     tmp_files.append(tmp_path)
 
-                    # Etiket hücresi
                     label_cell = ws.cell(row=current_row, column=img_col_idx,
                                          value=f"📸 {label}")
-                    label_cell.font      = openpyxl.styles.Font(bold=True, color="1F4E79", size=10)
-                    label_cell.fill      = openpyxl.styles.PatternFill("solid", fgColor="DEEAF1")
+                    label_cell.font      = openpyxl.styles.Font(
+                        bold=True, color="1F4E79", size=10)
+                    label_cell.fill      = openpyxl.styles.PatternFill(
+                        "solid", fgColor="DEEAF1")
                     label_cell.alignment = openpyxl.styles.Alignment(
                         horizontal="center", vertical="center")
                     ws.row_dimensions[current_row].height = 20
                     current_row += 1
 
-                    # Resmi ekle
                     xl_img        = XLImage(tmp_path)
                     xl_img.width  = target_w
                     xl_img.height = target_h
                     ws.add_image(xl_img, f"{img_col_ltr}{current_row}")
 
-                    # Resmin kapladığı satır sayısı — Excel'de 1 satır ≈ 15px
                     rows_needed = max(1, target_h // 15 + 1)
                     for r in range(current_row, current_row + rows_needed):
                         ws.row_dimensions[r].height = 15
                     current_row += rows_needed
 
-                    # Resimler arası 2 satır boşluk
                     ws.row_dimensions[current_row].height = 8
                     ws.row_dimensions[current_row + 1].height = 8
                     current_row += 2
 
                 except Exception as e:
-                    self._log(f"⚠️  {label} screenshot eklenemedi: {e}", "warn")
+                    self._log(t("session_log_screenshot_err",
+                                label=label, error=e), "warn")
 
             shr.safe_save(wb, excel_file)
 
@@ -552,10 +513,10 @@ class SessionTab:
                 except OSError:
                     pass
 
-            self._log(f"   📸 {len(self._page_summary)} screenshot Excel'e eklendi.", "dim")
+            self._log(t("session_log_screenshots", n=len(self._page_summary)), "dim")
 
         except Exception as ex:
-            self._log(f"⚠️  Screenshot ekleme hatası: {ex}", "warn")
+            self._log(t("session_log_ss_add_error", error=ex), "warn")
 
     # ── Oturumu iptal et ──────────────────────────────────────────────────────
     def abort_session(self):
@@ -567,7 +528,7 @@ class SessionTab:
             self._driver = None
         self._running    = False
         self._collecting = False
-        self._log("■ Oturum durduruldu.", "warn")
+        self._log(t("session_log_abort"), "warn")
         self.app.after(0, lambda: self.app._set_session_state("idle"))
 
     # ── Yardımcılar ───────────────────────────────────────────────────────────
