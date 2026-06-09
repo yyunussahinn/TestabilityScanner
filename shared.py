@@ -1,10 +1,10 @@
 """
-shared.py — Where is My Id
-────────────────────────────────────────────────────────────────────────────
+shared.py — Where is My Id  (i18n)
+────────────────────────────────────────────────────────────────
 Ortak sabitler, renk paleti, stil yardımcıları ve çıktı üreticileri.
-element_checker_ios.py, element_checker_android.py ve build_summary.py
-tarafından import edilir.
+Tüm kullanıcıya görünen mesajlar i18n.t() üzerinden yönetilir.
 """
+
 import json as _json
 import os as _os
 import os
@@ -15,6 +15,8 @@ from datetime import datetime
 import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+
+from i18n import t
 
 # ── Status sabitleri ──────────────────────────────────────────────────────────
 STATUS_UNIQUE    = "ID Var"
@@ -43,8 +45,10 @@ STATUS_PALETTE: dict[str, dict] = {
     STATUS_DUPLICATE: {"hdr": "7B3F00", "row": "FAEEDA", "alt": "FEF6E4", "txt": "3B1F00"},
     STATUS_UNIQUE:    {"hdr": "375623", "row": "E2EFDA", "alt": "EAF3DE", "txt": "173404"},
 }
-NEW_STATUS_COLOR: dict[str, str]    = {"hdr": "843C0C", "row": "FDE9D9", "alt": "FEF3EC", "txt": "843C0C"}
-AI_SUGGESTION_COLOR: dict[str, str] = {"hdr": "1F4E79", "row": "DEEAF1", "alt": "EBF3F9", "txt": "1F4E79"}
+NEW_STATUS_COLOR: dict[str, str]    = {
+    "hdr": "843C0C", "row": "FDE9D9", "alt": "FEF3EC", "txt": "843C0C"}
+AI_SUGGESTION_COLOR: dict[str, str] = {
+    "hdr": "1F4E79", "row": "DEEAF1", "alt": "EBF3F9", "txt": "1F4E79"}
 
 # ── openpyxl stil sabitleri ───────────────────────────────────────────────────
 _THIN  = Side(style="thin")
@@ -61,32 +65,19 @@ def hdr_font(size: int = 10) -> Font:
 
 # ── Güvenli Excel kaydı ───────────────────────────────────────────────────────
 def safe_save(wb: openpyxl.Workbook, filepath: str) -> None:
-    """
-    Workbook'u önce geçici dosyaya kaydeder, ardından atomik os.replace() ile
-    hedefe taşır.
-
-    Neden gerekli?
-    • OneDrive / iCloud klasörlerine doğrudan wb.save(path) yapıldığında,
-      sync daemon dosyayı kilitlemiş ya da yeni sürüm yüklüyorsa macOS
-      çakışma kopyası oluşturur → "Elements_Report_Android-N100165.xlsx" gibi.
-    • Geçici dosya → atomik rename yöntemi bu pencereyi en aza indirir.
-    • Dosya hâlâ açıksa (Numbers / Excel) PermissionError fırlatır; kullanıcı
-      bilgilendirilir.
-    """
     dirpath = os.path.dirname(os.path.abspath(filepath))
     fd, tmp = tempfile.mkstemp(suffix=".xlsx", dir=dirpath)
     os.close(fd)
     try:
         wb.save(tmp)
-        os.replace(tmp, filepath)   # POSIX'te atomik
+        os.replace(tmp, filepath)
     except PermissionError:
         try:
             os.remove(tmp)
         except OSError:
             pass
         raise PermissionError(
-            f"❌ '{os.path.basename(filepath)}' dosyası başka bir uygulama tarafından "
-            "açık. Lütfen Excel / Numbers'ı kapatıp tekrar çalıştırın."
+            t("shared_permission_error", file=os.path.basename(filepath))
         )
     except Exception:
         try:
@@ -98,30 +89,24 @@ def safe_save(wb: openpyxl.Workbook, filepath: str) -> None:
 
 # ── Kullanıcı onay soruları ───────────────────────────────────────────────────
 def ask_overwrite(label: str) -> bool:
-    """[e/h] sorusu; doğru cevap gelene kadar tekrar eder."""
+    """[e/h] veya [y/n] sorusu; dile göre doğru cevap gelene kadar tekrar eder."""
     while True:
         sys.stdout.flush()
-        ans = input(
-            f"   ⚠️  {label} zaten mevcut. Üzerine yazmak istiyor musunuz? [e/h]: "
-        ).strip().lower()
+        ans = input(t("shared_ask_overwrite", label=label)).strip().lower()
         if ans in ("e", "evet", "y", "yes"):  return True
-        if ans in ("h", "hayır", "n", "no"): return False
-        print("   Lütfen 'e' (evet) veya 'h' (hayır) girin.")
+        if ans in ("h", "hayır", "n", "no", "hayir"): return False
+        print(t("shared_ask_overwrite_retry"))
 
 
 # ── AI Suggestion zenginleştirici ─────────────────────────────────────────────
 def enrich_with_ai(all_elements: list, platform: str) -> list:
-    """
-    ai_suggestion.py mevcutsa elementleri zenginleştirir.
-    Yoksa veya hata verirse 'ai_suggestion' anahtarını boş bırakır.
-    """
     try:
         from ai_suggestion import enrich_elements
         return enrich_elements(all_elements, platform)
     except ImportError:
-        print("⚠️  ai_suggestion.py bulunamadı. AI Suggestion sütunu boş kalacak.")
+        print(t("shared_ai_missing"))
     except Exception as ex:
-        print(f"⚠️  AI Suggestion hatası: {ex}. Sütun boş kalacak.")
+        print(t("shared_ai_error", error=ex))
     for e in all_elements:
         e.setdefault("ai_suggestion", "")
     return all_elements
@@ -133,7 +118,7 @@ def generate_excel(
     page_name:         str,
     excel_file:        str,
     document_sections: list,
-    platform:          str,        # "ios" | "android"
+    platform:          str,
     screenshot_path:   str = "",
 ) -> None:
     from openpyxl.drawing.image import Image as XLImage
@@ -147,22 +132,18 @@ def generate_excel(
     WIDTHS   = [22, 16, 16, 26, 18, 32, 14, 28, 45]
 
     DATA_COLS  = len(COLS)
-    IMG_COL    = DATA_COLS + 2                       # boşluk sütunu atlayarak
+    IMG_COL    = DATA_COLS + 2
     IMG_LTR    = get_column_letter(IMG_COL)
     PLAT_LABEL = "iOS" if platform == "ios" else "ANDROID"
 
-    # Mevcut workbook'u yükle veya yeni oluştur
     wb = (openpyxl.load_workbook(excel_file)
           if os.path.exists(excel_file) else openpyxl.Workbook())
-    # Boş varsayılan sheet'i temizle
     if "Sheet" in wb.sheetnames and len(wb.sheetnames) == 1:
         del wb["Sheet"]
-    # Aynı isimli sheet varsa sil
     if page_name in wb.sheetnames:
         del wb[page_name]
     ws = wb.create_sheet(title=page_name)
 
-    # Başlık satırı
     ts = datetime.now().strftime("%d.%m.%Y %H:%M")
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=DATA_COLS)
     c = ws.cell(row=1, column=1, value=f"{page_name}  |  {ts}  |  {PLAT_LABEL}")
@@ -170,7 +151,6 @@ def generate_excel(
     c.fill = fill("1F3864"); c.alignment = CENTER; c.border = BORDER
     ws.row_dimensions[1].height = 26
 
-    # Kolon başlıkları
     for ci, col_name in enumerate(COLS, 1):
         c = ws.cell(row=2, column=ci, value=col_name)
         c.font = hdr_font()
@@ -181,7 +161,6 @@ def generate_excel(
     ws.row_dimensions[2].height = 18
     ws.freeze_panes = "A3"
 
-    # Veri satırları
     ordered = _build_ordered(all_elements, document_sections)
     for idx, elem in enumerate(ordered):
         elem_id    = f"{page_name}_element_{idx + 1}"
@@ -190,8 +169,10 @@ def generate_excel(
         row_num    = 3 + idx
         pal        = STATUS_PALETTE.get(status, STATUS_PALETTE[STATUS_MISSING])
         r_fill     = fill(pal["row"] if idx % 2 == 0 else pal["alt"])
-        ns_fill    = fill(NEW_STATUS_COLOR["row"] if idx % 2 == 0 else NEW_STATUS_COLOR["alt"])
-        ai_fill    = fill(AI_SUGGESTION_COLOR["row"] if idx % 2 == 0 else AI_SUGGESTION_COLOR["alt"])
+        ns_fill    = fill(NEW_STATUS_COLOR["row"] if idx % 2 == 0
+                          else NEW_STATUS_COLOR["alt"])
+        ai_fill    = fill(AI_SUGGESTION_COLOR["row"] if idx % 2 == 0
+                          else AI_SUGGESTION_COLOR["alt"])
 
         for ci, key in enumerate(COL_KEYS, 1):
             val = _get_val(elem, key, elem_id, new_status)
@@ -204,7 +185,6 @@ def generate_excel(
     for ci, w in enumerate(WIDTHS, 1):
         ws.column_dimensions[get_column_letter(ci)].width = w
 
-    # Ekran görüntüsü
     tmp_path = None
     if screenshot_path and os.path.exists(screenshot_path):
         try:
@@ -217,7 +197,8 @@ def generate_excel(
                 img.resize((target_w, target_h), PILImage.LANCZOS).save(tmp_path, "PNG")
 
             ws.column_dimensions[get_column_letter(DATA_COLS + 1)].width = 2
-            ws.merge_cells(start_row=1, start_column=IMG_COL, end_row=2, end_column=IMG_COL)
+            ws.merge_cells(start_row=1, start_column=IMG_COL,
+                           end_row=2, end_column=IMG_COL)
             hc = ws.cell(row=1, column=IMG_COL, value=f"📸 {page_name}")
             hc.font = hdr_font(); hc.fill = fill("1F3864")
             hc.alignment = CENTER; hc.border = BORDER
@@ -227,10 +208,10 @@ def generate_excel(
             xl_img.width = target_w; xl_img.height = target_h
             ws.add_image(xl_img, f"{IMG_LTR}3")
         except Exception as e:
-            print(f"⚠️  Ekran görüntüsü Excel'e eklenemedi: {e}")
+            print(f"⚠️  {e}")
 
     safe_save(wb, excel_file)
-    print(f"📊 Excel kaydedildi: {excel_file}  (sheet: {page_name})")
+    print(t("shared_excel_saved", file=excel_file, sheet=page_name))
 
     if tmp_path and os.path.exists(tmp_path):
         try:
@@ -245,28 +226,12 @@ def generate_json(
         json_file: str,
         platform: str,
 ) -> None:
-    """
-    Sadece STATUS_UNIQUE elementler için JSON dosyası üretir.
-
-    Her entry, AI Suggestion sütunundaki JSON objesinden direkt parse edilir:
-    {
-        "key":           "availSearchDepDateCardView",
-        "androidValue":  "avail_search_dep_date_card",
-        "androidType":   "id",
-        "iosValue":      "avail_search_dep_date_card",
-        "iosType":       "accessibilityId"
-    }
-
-    AI suggestion parse edilemezse (boş/ham metin) o element atlanır.
-    Dosya ismi: {PAGE_NAME}_android.json / {PAGE_NAME}_ios.json
-    """
-
     unique_elements = [
         e for e in elements
         if e.get("acc_id") and e.get("status") == STATUS_UNIQUE
     ]
 
-    output = []
+    output  = []
     skipped = 0
 
     for el in unique_elements:
@@ -275,15 +240,12 @@ def generate_json(
             skipped += 1
             continue
 
-        # AI suggestion sütunu bazen birden fazla JSON bloğu içerebilir.
-        # Önce tek obje olarak parse etmeyi dene, olmazsa ilk bloğu çıkar.
         parsed = None
         try:
             parsed = _json.loads(raw_ai)
         except _json.JSONDecodeError:
-            # Baştaki/sondaki süslü parantez arasını bul
             start = raw_ai.find("{")
-            end = raw_ai.rfind("}") + 1
+            end   = raw_ai.rfind("}") + 1
             if start != -1 and end > start:
                 try:
                     parsed = _json.loads(raw_ai[start:end])
@@ -294,13 +256,12 @@ def generate_json(
             skipped += 1
             continue
 
-        # Sadece istenen 5 alanı al; eksik alanlar boş string kalır
         entry = {
-            "key": parsed.get("key", ""),
+            "key":          parsed.get("key", ""),
             "androidValue": parsed.get("androidValue", ""),
-            "androidType": parsed.get("androidType", ""),
-            "iosValue": parsed.get("iosValue", ""),
-            "iosType": parsed.get("iosType", ""),
+            "androidType":  parsed.get("androidType", ""),
+            "iosValue":     parsed.get("iosValue", ""),
+            "iosType":      parsed.get("iosType", ""),
         }
         output.append(entry)
 
@@ -312,10 +273,11 @@ def generate_json(
     with open(json_file, "w", encoding="utf-8") as f:
         _json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📄 JSON dosyası oluşturuldu : {json_file}")
-    print(f"   ✅ Yazılan  : {len(output)} element")
+    print(t("shared_json_created", file=json_file))
+    print(t("shared_json_written", n=len(output)))
     if skipped:
-        print(f"   ⚠️  Atlanan  : {skipped} (AI suggestion parse edilemedi)")
+        print(t("shared_json_skipped", n=skipped))
+
 
 # ── Word çıktı üreticisi ──────────────────────────────────────────────────────
 def generate_word(
@@ -356,10 +318,10 @@ def generate_word(
         os.remove(word_file)
     doc = Document()
 
-    title      = doc.add_heading(f"Accessibility ID Report — {page_name}", level=1)
+    title = doc.add_heading(f"Accessibility ID Report — {page_name}", level=1)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     dp = doc.add_paragraph(
-        f"Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}  |  Platform: {PLAT_LABEL}")
+        f"Date: {datetime.now().strftime('%d.%m.%Y %H:%M')}  |  Platform: {PLAT_LABEL}")
     dp.alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph("")
 
@@ -384,8 +346,10 @@ def generate_word(
             new_status = get_new_status(status)
             pal        = STATUS_PALETTE.get(status, STATUS_PALETTE[STATUS_MISSING])
             row_hex    = pal["row"] if idx % 2 == 0 else pal["alt"]
-            ns_hex     = NEW_STATUS_COLOR["row"] if idx % 2 == 0 else NEW_STATUS_COLOR["alt"]
-            ai_hex     = AI_SUGGESTION_COLOR["row"] if idx % 2 == 0 else AI_SUGGESTION_COLOR["alt"]
+            ns_hex     = (NEW_STATUS_COLOR["row"] if idx % 2 == 0
+                          else NEW_STATUS_COLOR["alt"])
+            ai_hex     = (AI_SUGGESTION_COLOR["row"] if idx % 2 == 0
+                          else AI_SUGGESTION_COLOR["alt"])
 
             row_cells = table.add_row().cells
             for i, key in enumerate(COL_KEYS):
@@ -413,28 +377,27 @@ def generate_word(
 
     if screenshot_path and os.path.exists(screenshot_path):
         try:
-            doc.add_heading("📸 Ekran Görüntüsü", level=2)
+            doc.add_heading("📸 Screenshot", level=2)
             with PILImage.open(screenshot_path) as img:
                 w_px, _ = img.size
             w_in = min(w_px / 96, 5.5)
             p = doc.add_paragraph()
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.add_run().add_picture(screenshot_path, width=Inches(w_in))
-            cap = doc.add_paragraph(f"{page_name} sayfası ekran görüntüsü")
+            cap = doc.add_paragraph(f"{page_name} page screenshot")
             cap.alignment         = WD_ALIGN_PARAGRAPH.CENTER
             cap.runs[0].font.size = Pt(9)
             cap.runs[0].italic    = True
         except Exception as e:
-            print(f"⚠️  Ekran görüntüsü Word'e eklenemedi: {e}")
+            print(f"⚠️  {e}")
 
     doc.save(word_file)
-    print(f"📄 Word kaydedildi: {word_file}")
+    print(t("shared_word_saved", file=word_file))
 
 
 # ── İç yardımcılar ───────────────────────────────────────────────────────────
 
 def _build_ordered(all_elements: list, document_sections: list) -> list:
-    """Elementleri config'deki section sırasına göre döndürür."""
     grouped = {s: [e for e in all_elements if e["status"] == s]
                for s in ALL_STATUSES}
     result = []
@@ -450,7 +413,8 @@ def _get_val(elem: dict, key: str, elem_id: str, new_status: str) -> str:
     return elem.get(key, "") or ""
 
 
-def _style_excel_cell(c, key: str, pal: dict, r_fill, ns_fill, ai_fill, new_status: str) -> None:
+def _style_excel_cell(c, key: str, pal: dict, r_fill, ns_fill,
+                       ai_fill, new_status: str) -> None:
     if key == "ai_suggestion":
         c.fill      = ai_fill
         c.font      = Font(size=8, color=AI_SUGGESTION_COLOR["txt"])

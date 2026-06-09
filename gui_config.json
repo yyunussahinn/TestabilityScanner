@@ -1,6 +1,7 @@
 {
-  "platform": "android",
-  "output_word": false,
+  "platform": "ios",
+  "language": "EN",
+  "output_word": true,
   "output_excel": true,
   "output_json": true,
   "output_dir": "/Users/yunus.sahin/Library/CloudStorage/OneDrive-TESTINIUMTeknolojiYazılımA.Ş/Test",
@@ -58,7 +59,13 @@
       "platform_version": "9",
       "app_package": "com.sahibinden",
       "app_activity": "com.sahibinden.app.main.ui.MainActivity"
+    },
+    "booking.com": {
+      "device_name": "ce04171418dee0010c",
+      "platform_version": "9",
+      "app_package": "com.booking",
+      "app_activity": "com.booking/.startup.HomeActivity"
     }
   },
-  "active_android_profile": "PIA Android"
+  "active_android_profile": "booking.com"
 }
