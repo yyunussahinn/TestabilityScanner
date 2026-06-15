@@ -165,7 +165,7 @@ class SessionTab:
             return
 
         self._scan_counter += 1
-        scan_label = f"{self._flow_name} - tarama {self._scan_counter}"
+        scan_label = f"{self._flow_name} - {t('session_scan_label')} {self._scan_counter}"
 
         self._collecting = True
         self.app.after(0, lambda: self.app._set_session_state("collecting"))

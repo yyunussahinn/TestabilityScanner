@@ -263,9 +263,9 @@ def _to_snake(text: str) -> str:
 # Toplu işlem: tüm element listesi için suggestion üret
 # ─────────────────────────────────────────────────────────────────────────────
 
-STATUS_UNIQUE    = "ID Var"
-STATUS_DUPLICATE = "Duplicate"
-STATUS_MISSING   = "ID Yok"
+STATUS_UNIQUE    = "Unique ID"
+STATUS_DUPLICATE = "Duplicate ID"
+STATUS_MISSING   = "Missing ID"
 STATUS_UNDEFINED = "Undefined ID"
 
 

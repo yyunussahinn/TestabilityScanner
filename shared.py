@@ -19,13 +19,13 @@ from openpyxl.utils import get_column_letter
 from i18n import t
 
 # ── Status sabitleri ──────────────────────────────────────────────────────────
-STATUS_UNIQUE    = "ID Var"
-STATUS_DUPLICATE = "Duplicate"
-STATUS_MISSING   = "ID Yok"
+STATUS_UNIQUE    = "Unique ID"
+STATUS_DUPLICATE = "Duplicate ID"
+STATUS_MISSING   = "Missing ID"
 STATUS_UNDEFINED = "Undefined ID"
 ALL_STATUSES     = [STATUS_MISSING, STATUS_UNDEFINED, STATUS_DUPLICATE, STATUS_UNIQUE]
 
-NS_WAITING = "ID Eklenecek (Waiting Dev)"
+NS_WAITING = "ID Must Be Added (Waiting Dev)"
 
 SECTION_TO_STATUS: dict[str, str] = {
     "missing":   STATUS_MISSING,
