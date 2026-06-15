@@ -38,14 +38,14 @@ AND_CONDITIONAL = [
 ]
 AND_RESOURCE_ONLY = ["android.widget.TextView"]
 
-STATUS_UNIQUE    = "ID Var"
-STATUS_DUPLICATE = "Duplicate"
-STATUS_MISSING   = "ID Yok"
+STATUS_UNIQUE    = "Unique ID"
+STATUS_DUPLICATE = "Duplicate ID"
+STATUS_MISSING   = "Missing ID"
 STATUS_UNDEFINED = "Undefined ID"
 
 
 def get_new_status(status: str) -> str:
-    return "" if status == STATUS_UNIQUE else "ID Eklenecek (Waiting Dev)"
+    return "" if status == STATUS_UNIQUE else "ID Must Be Added (Waiting Dev)"
 
 
 # ════════════════════════════════════════════════════════════════════════════

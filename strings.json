@@ -181,6 +181,7 @@
     "session_log_screenshot_err": "⚠️  {label} screenshot eklenemedi: {error}",
     "session_log_ss_add_error":   "⚠️  Screenshot ekleme hatası: {error}",
     "session_log_sheet_missing":  "⚠️  Sheet '{sheet}' bulunamadı, screenshot eklenemedi.",
+    "session_scan_label": "Tarama",
 
     "shared_word_saved":          "📄 Word kaydedildi: {file}",
     "shared_excel_saved":         "📊 Excel kaydedildi: {file}  (sheet: {sheet})",
@@ -215,6 +216,20 @@
     "smart_checker_excel_saved":  "📊 Excel kaydedildi: {file}",
     "smart_checker_json_saved":   "🗂  JSON kaydedildi: {file}",
     "smart_checker_app_start":    "🚀 Appium driver başlatılıyor...",
+    "test_file_not_found":        "❌ Dosya bulunamadı: {path}",
+    "test_boxes_result":          "✅ {n} kare",
+    "test_cancelled":             "🚫 İptal",
+
+    "checker_platform":       "Platform",
+    "checker_output_fmt":     "Çıktı formatı",
+    "checker_page_name":      "Sayfa adı",
+    "checker_file":           "dosyası",
+    "checker_cancelled":      "İşlem iptal edildi.",
+    "checker_missing_deps":   "Eksik kütüphane(ler):",
+    "checker_invalid_format": "Geçersiz OUTPUT_FORMAT: '{fmt}'. Geçerli: word, excel, json",
+    "checker_invalid_section":"Geçersiz DOCUMENT_SECTIONS değeri: '{section}'",
+    "checker_page_not_found": "(bulunamadı)",
+    "checker_page_prompt": "PAGE_NAME_INPUT: Sayfa adı gir",
 
     "lang_label": "Dil:"
   },
@@ -401,6 +416,7 @@
     "session_log_screenshot_err": "⚠️  Could not add {label} screenshot: {error}",
     "session_log_ss_add_error":   "⚠️  Screenshot add error: {error}",
     "session_log_sheet_missing":  "⚠️  Sheet '{sheet}' not found, screenshots not added.",
+    "session_scan_label": "Scan",
 
     "shared_word_saved":          "📄 Word saved: {file}",
     "shared_excel_saved":         "📊 Excel saved: {file}  (sheet: {sheet})",
@@ -435,6 +451,21 @@
     "smart_checker_excel_saved":  "📊 Excel saved: {file}",
     "smart_checker_json_saved":   "🗂  JSON saved: {file}",
     "smart_checker_app_start":    "🚀 Starting Appium driver...",
+    "test_file_not_found":        "❌ File not found: {path}",
+    "test_boxes_result":          "✅ {n} boxes",
+    "test_cancelled":             "🚫 Cancelled",
+
+    "checker_platform":       "Platform",
+    "checker_output_fmt":     "Output format",
+    "checker_page_name":      "Page name",
+    "checker_file":           "file",
+    "checker_cancelled":      "Operation cancelled.",
+    "checker_missing_deps":   "Missing dependencies:",
+    "checker_invalid_format": "Invalid OUTPUT_FORMAT: '{fmt}'. Valid: word, excel, json",
+    "checker_invalid_section":"Invalid DOCUMENT_SECTIONS value: '{section}'",
+    "checker_page_not_found": "(not found)",
+    "checker_page_prompt": "PAGE_NAME_INPUT: Enter page name",
+
 
     "lang_label": "Lang:"
   }

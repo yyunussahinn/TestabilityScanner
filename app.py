@@ -1505,8 +1505,15 @@ class App(ctk.CTk):
                 return s.replace("\u0131", "i").replace("\u0130", "i").lower()
 
             def _is_page_prompt(text):
+                from i18n import t, available_langs
                 n = _normalize(text)
-                return "sayfa adi gir" in n or ("sayfa ad" in n and "gir" in n)
+                # Tüm dillerdeki checker_page_prompt değerlerini kontrol et
+                for lang in available_langs():
+                    import i18n as _i18n
+                    prompt_val = _i18n._strings.get(lang, {}).get("checker_page_prompt", "")
+                    if prompt_val and _normalize(prompt_val) in n:
+                        return True
+                return False
 
             def handle(line):
                 nonlocal page_asked
@@ -1526,7 +1533,7 @@ class App(ctk.CTk):
                     self._proc.stdin.flush()
                     return
 
-                if "uezerine yazmak istiyor musunuz" in norm or "[e/h]" in low:
+                if "uzerine yazmak istiyor musunuz" in norm or "[e/h]" in low:
                     import re as _re
                     m = _re.search(r"'([^']+)'", line)
                     short = m.group(1) if m else line

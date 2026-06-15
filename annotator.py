@@ -3,8 +3,8 @@ annotator.py
 ────────────────────────────────────────────────────────────────
 Ekran görüntüsü üzerine mouse ile kırmızı kare çizme penceresi.
 
-v4.4: macOS'ta tk.Button bg rengi sistem tarafından override edildiği için
-      Canvas tabanlı renkli butonlar (CBtn) kullanılıyor.
+v4.5: i18n entegrasyonu — tüm kullanıcıya görünen metinler
+      strings.json üzerinden i18n.t() ile yönetilir.
 
 Modül olarak kullanım:
     from annotator import open_annotator
@@ -15,6 +15,8 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import os
 import sys
+
+from i18n import t
 
 # ── Renkler ─────────────────────────────────────────────────────────────────
 BG_MAIN   = "#F5F0E8"
@@ -50,7 +52,6 @@ class CBtn:
         self._w       = width
         self._h       = height
 
-        # parent'ın bg rengini al (canvas şeffaf görünsün)
         try:
             pbg = parent.cget("bg")
         except Exception:
@@ -80,7 +81,6 @@ class CBtn:
 
     def _make_rect(self, fill_color):
         w, h, r = self._w, self._h, 7
-        # Smooth rounded polygon
         pts = [
             r, 0,    w-r, 0,
             w, 0,    w, r,
@@ -102,6 +102,10 @@ class CBtn:
         if state is not None:
             self._enabled = (state == "normal")
         self._refresh()
+
+    def set_text(self, text: str):
+        """Buton metnini günceller (dil değişimi için)."""
+        self.canvas.itemconfigure(self._lbl, text=text)
 
     def _refresh(self):
         if self._enabled:
@@ -156,7 +160,7 @@ def open_annotator(parent, image_path: str) -> list:
 
     # Pencere
     win = tk.Toplevel(parent)
-    win.title("Annotation — Elementleri İşaretle")
+    win.title(t("annotator_title"))
     win.configure(bg=BG_MAIN)
     win.resizable(True, True)
     win.protocol("WM_DELETE_WINDOW", win.destroy)
@@ -165,10 +169,10 @@ def open_annotator(parent, image_path: str) -> list:
     hdr = tk.Frame(win, bg=BG_PANEL, height=40)
     hdr.pack(fill="x")
     hdr.pack_propagate(False)
-    tk.Label(hdr, text="📍  ELEMENT ANNOTATION",
+    tk.Label(hdr, text=t("annotator_header"),
              font=("Courier New", 11, "bold"),
              bg=BG_PANEL, fg="#000000").pack(side="left", padx=16)
-    tk.Label(hdr, text="Mouse ile elementleri kare içine alın",
+    tk.Label(hdr, text=t("annotator_hint"),
              font=("Courier New", 9),
              bg=BG_PANEL, fg=T_MUT).pack(side="left", padx=4)
 
@@ -197,7 +201,7 @@ def open_annotator(parent, image_path: str) -> list:
     canvas.create_image(0, 0, anchor="nw", image=tk_img)
 
     # Info bar
-    info_var = tk.StringVar(value="0 kare çizildi")
+    info_var = tk.StringVar(value=t("lbl_boxes_drawn"))
     info_bar = tk.Frame(win, bg=BG_INPUT, height=24)
     info_bar.pack(fill="x", padx=10)
     info_bar.pack_propagate(False)
@@ -205,7 +209,7 @@ def open_annotator(parent, image_path: str) -> list:
              font=("Courier New", 8), bg=BG_INPUT, fg=T_MUT,
              anchor="w").pack(side="left", padx=8)
     tk.Label(info_bar,
-             text=f"Ölçek: {scale:.2f}x  |  Orijinal: {orig_w}×{orig_h}px",
+             text=f"{t('lbl_scale')} {scale:.2f}x  |  {t('lbl_original')} {orig_w}×{orig_h}px",
              font=("Courier New", 8), bg=BG_INPUT, fg=T_MUT,
              ).pack(side="right", padx=8)
 
@@ -215,8 +219,6 @@ def open_annotator(parent, image_path: str) -> list:
 
     left_f  = tk.Frame(btn_bar, bg=BG_MAIN)
     left_f.pack(side="left")
-    right_f = tk.Frame(btn_bar, bg=BG_MAIN)
-    right_f.pack(side="right")
 
     # ── State ─────────────────────────────────────────────────────────────────
     rects      = []
@@ -225,10 +227,10 @@ def open_annotator(parent, image_path: str) -> list:
 
     def update_info():
         n = len(rects)
-        info_var.set(
-            "0 kare çizildi" if n == 0
-            else f"{n} element işaretlendi  —  Onaylamak için butona bas"
-        )
+        if n == 0:
+            info_var.set(t("lbl_boxes_drawn"))
+        else:
+            info_var.set(t("lbl_boxes_marked", n=n))
         if n > 0:
             btn_confirm.configure(state="normal", colors=BTN_OK_ON)
         else:
@@ -310,21 +312,19 @@ def open_annotator(parent, image_path: str) -> list:
         win.destroy()
 
     # Butonlar
-    CBtn(left_f, "↩  Geri Al", BTN_UNDO, undo,
+    CBtn(left_f, t("btn_undo"), BTN_UNDO, undo,
          width=130, height=40, font_size=9).pack(side="left", padx=(8, 8))
-    CBtn(left_f, "✕  Temizle", BTN_CLEAR, clear,
+    CBtn(left_f, t("btn_clear_boxes"), BTN_CLEAR, clear,
          width=130, height=40, font_size=9).pack(side="left", padx=(8, 8))
-
-    CBtn(left_f, "İptal", BTN_CANCEL, cancel,
+    CBtn(left_f, t("btn_cancel"), BTN_CANCEL, cancel,
          width=90, height=40, font_size=9).pack(side="left", padx=(8, 8))
 
-    btn_confirm = CBtn(left_f, "✓  Onayla  →  Raporu Oluştur",
+    btn_confirm = CBtn(left_f, t("btn_confirm"),
                        BTN_OK_OFF, confirm,
                        width=260, height=40, font_size=10)
     btn_confirm.pack(side="left", padx=(8, 0))
     btn_confirm.configure(state="disabled", colors=BTN_OK_OFF)
     btn_confirm.pack(side="left")
-
 
     # Pencere boyutu
     extra_h = 40 + 24 + 60 + 20
@@ -350,11 +350,11 @@ def open_annotator(parent, image_path: str) -> list:
 if __name__ == "__main__":
     path = sys.argv[1] if len(sys.argv) >= 2 else "/tmp/test.png"
     if not os.path.exists(path):
-        print(f"❌ Dosya bulunamadı: {path}")
+        print(t("test_file_not_found", path=path))
         sys.exit(1)
     root = tk.Tk()
     root.title("Test")
     root.geometry("1x1+0+0")
     boxes = open_annotator(root, path)
-    print(f"✅ {len(boxes)} kare" if boxes else "🚫 İptal")
+    print(t("test_boxes_result", n=len(boxes)) if boxes else t("test_cancelled"))
     root.destroy()

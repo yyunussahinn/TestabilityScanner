@@ -24,7 +24,7 @@ def _check_deps() -> None:
         except ImportError:
             missing.append(f"   {pkg:12s} →  pip install {pip_name}")
     if missing:
-        print("\n❌ Eksik kütüphane(ler):\n" + "\n".join(missing))
+        print("\n❌ " + t("checker_missing_deps") + "\n" + "\n".join(missing))
         raise SystemExit(1)
 
 _check_deps()
@@ -32,6 +32,7 @@ _check_deps()
 import openpyxl
 import config as cfg
 import shared as sh
+from i18n import t
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from appium.options.android import UiAutomator2Options
@@ -44,12 +45,10 @@ DOCUMENT_SECTIONS = [s.strip().lower() for s in cfg.DOCUMENT_SECTIONS]
 PLATFORM          = "android"
 BLACKLIST         = set(cfg.BLACKLIST_IDS)
 
-# Geçerli format parçaları
 _VALID_PARTS = {"word", "excel", "json"}
 _fmt_parts   = set(OUTPUT_FMT.split("+"))
 if not _fmt_parts or not _fmt_parts.issubset(_VALID_PARTS):
-    raise ValueError(f"config.py — Geçersiz OUTPUT_FORMAT: '{OUTPUT_FMT}'. "
-                     f"Geçerli değerler: word, excel, json (+ ile birleştirilebilir)")
+    raise ValueError(t("checker_invalid_format", fmt=OUTPUT_FMT))
 
 OUT_WORD  = "word"  in _fmt_parts
 OUT_EXCEL = "excel" in _fmt_parts
@@ -57,13 +56,13 @@ OUT_JSON  = "json"  in _fmt_parts
 
 for _s in DOCUMENT_SECTIONS:
     if _s not in {"missing", "undefined", "duplicate", "unique"}:
-        raise ValueError(f"config.py — Geçersiz DOCUMENT_SECTIONS değeri: '{_s}'")
+        raise ValueError(t("checker_invalid_section", section=_s))
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ── Sayfa adı & üzerine yazma onayı ──────────────────────────────────────────
 sys.stdout.flush()
-PAGE_NAME = input("Sayfa adı gir").strip()
+PAGE_NAME = input(t("checker_page_prompt") + ": ").strip()
 
 WORD_FILE       = os.path.join(OUTPUT_DIR, f"{PAGE_NAME}_elements_Android.docx")
 EXCEL_FILE      = os.path.join(OUTPUT_DIR, "Elements_Report_Android.xlsx")
@@ -73,8 +72,8 @@ os.makedirs(SCREENSHOT_DIR, exist_ok=True)
 SCREENSHOT_PATH = os.path.join(SCREENSHOT_DIR, f"{PAGE_NAME}.png")
 
 if OUT_WORD and os.path.exists(WORD_FILE):
-    if not sh.ask_overwrite(f"Word dosyası '{os.path.basename(WORD_FILE)}'"):
-        print("\n🚫 İşlem iptal edildi.\n"); raise SystemExit(0)
+    if not sh.ask_overwrite(f"Word {t('checker_file')} '{os.path.basename(WORD_FILE)}'"):
+        print("\n🚫 " + t("checker_cancelled")); raise SystemExit(0)
 
 if OUT_EXCEL and os.path.exists(EXCEL_FILE):
     try:
@@ -82,17 +81,17 @@ if OUT_EXCEL and os.path.exists(EXCEL_FILE):
         _has_sheet = PAGE_NAME in _wb.sheetnames
         _wb.close()
         if _has_sheet and not sh.ask_overwrite(f"Excel sheet '{PAGE_NAME}'"):
-            print("\n🚫 İşlem iptal edildi.\n"); raise SystemExit(0)
+            print("\n🚫 " + t("checker_cancelled")); raise SystemExit(0)
     except openpyxl.utils.exceptions.InvalidFileException:
         pass
 
 if OUT_JSON and os.path.exists(JSON_FILE):
-    if not sh.ask_overwrite(f"JSON dosyası '{os.path.basename(JSON_FILE)}'"):
-        print("\n🚫 İşlem iptal edildi.\n"); raise SystemExit(0)
+    if not sh.ask_overwrite(f"JSON {t('checker_file')} '{os.path.basename(JSON_FILE)}'"):
+        print("\n🚫 " + t("checker_cancelled")); raise SystemExit(0)
 
-print(f"\n🔧 Platform     : ANDROID")
-print(f"📁 Çıktı formatı: {OUTPUT_FMT}")
-print(f"📄 Sayfa adı    : {PAGE_NAME}\n")
+print(f"\n🔧 {t('checker_platform')}: ANDROID")
+print(f"📁 {t('checker_output_fmt')}: {OUTPUT_FMT}")
+print(f"📄 {t('checker_page_name')}: {PAGE_NAME}\n")
 
 # ── Appium seçenekleri ────────────────────────────────────────────────────────
 _apk    = cfg.ANDROID
@@ -125,8 +124,8 @@ _RES_ID_ONLY = ["android.widget.TextView"]
 _ALL_TYPES   = _ALWAYS + _CONDITIONAL + _RES_ID_ONLY
 
 # ── Yardımcı fonksiyonlar ─────────────────────────────────────────────────────
-def _short_type(t: str) -> str:
-    return t.split(".")[-1]
+def _short_type(t_: str) -> str:
+    return t_.split(".")[-1]
 
 def _clean(val) -> str:
     v = (val or "").strip()
@@ -164,17 +163,17 @@ def _detected_page(driver) -> str:
         return ""
 
 # ── Driver & element toplama ──────────────────────────────────────────────────
-print("🚀 Appium driver başlatılıyor...")
+print("🚀 " + t("smart_checker_app_start"))
 driver = webdriver.Remote(APPIUM_SERVER, options=options)
 time.sleep(3)
 
-print("📸 Ekran görüntüsü alınıyor...")
+print("📸 " + t("smart_checker_screenshot"))
 driver.get_screenshot_as_file(SCREENSHOT_PATH)
 print(f"   → {SCREENSHOT_PATH}")
 
 page_detected = _detected_page(driver)
-print(f"   → Tespit edilen sayfa: {page_detected or '(bulunamadı)'}")
-print("🔍 Elementler taranıyor...")
+print(t("smart_checker_page", page=page_detected or t("checker_page_not_found")))
+print("🔍 " + t("smart_checker_scanning"))
 
 all_elements: list[dict] = []
 candidates:   list[dict] = []
@@ -209,7 +208,7 @@ for etype in _ALL_TYPES:
                                   "status": sh.STATUS_MISSING})
 
 driver.quit()
-print("✅ Driver kapatıldı.\n")
+print("✅ " + t("smart_checker_connected"))
 
 # Duplicate kontrolü
 _counts = Counter(r["acc_id"] for r in candidates)
@@ -222,13 +221,13 @@ for r in candidates:
 _grouped = {s: [e for e in all_elements if e["status"] == s]
             for s in sh.ALL_STATUSES}
 print("=" * 45)
-print(f"✅ Unique ID     : {len(_grouped[sh.STATUS_UNIQUE])}")
-print(f"⚠️  Undefined ID  : {len(_grouped[sh.STATUS_UNDEFINED])}")
-print(f"🔁 Duplicate ID  : {len(_grouped[sh.STATUS_DUPLICATE])}")
-print(f"❌ Missing ID    : {len(_grouped[sh.STATUS_MISSING])}")
+print(t("smart_checker_unique",    n=len(_grouped[sh.STATUS_UNIQUE])))
+print(t("smart_checker_undefined", n=len(_grouped[sh.STATUS_UNDEFINED])))
+print(t("smart_checker_duplicate", n=len(_grouped[sh.STATUS_DUPLICATE])))
+print(t("smart_checker_missing",   n=len(_grouped[sh.STATUS_MISSING])))
 print("=" * 45 + "\n")
 
-# AI Suggestion — önce enrich et
+# AI Suggestion
 all_elements = sh.enrich_with_ai(all_elements, PLATFORM)
 
 # ── Çıktı üret ────────────────────────────────────────────────────────────────
