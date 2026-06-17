@@ -1,11 +1,12 @@
 """
-Where is My Id — GUI  v4.4
+Where is My Id — GUI  v4.5
 ──────────────────────────────────────────────────────────────
-v4.4 eklemeleri:
-  - 3. tab: "📱 Session Tarama" (multi-page, tek driver oturumu)
-  - SessionTab mantık sınıfı: session_tab.py
-  - _set_session_state() — session durumuna göre buton yönetimi
-  - i18n: dil seçimi (TR/EN) header dropdown — strings.json üzerinden yönetilir
+v4.5 değişiklikleri:
+  - Üzerine yazma (overwrite) onay akışı kaldırıldı.
+    Aynı isimde dosya / sheet varsa direkt üzerine yazılır.
+  - ow_frame, _ow_ev, _ow_ans, _show_overwrite, _hide_overwrite,
+    _submit_overwrite ve ilgili butonlar temizlendi.
+  - _stream() sadece sayfa adı prompt'unu yönetir.
 """
 
 import customtkinter as ctk
@@ -134,7 +135,7 @@ def write_config_py(cfg, path):
     sec     = json.dumps(cfg.get("document_sections", []))
     od      = cfg.get("output_dir", "").replace("\\", "/")
     out_fmt = _build_output_format(cfg)
-    lang = cfg.get("language", "EN")
+    lang    = cfg.get("language", "EN")
     txt = (
         f'# WHERE IS MY ID — config.py  ({datetime.now():%d.%m.%Y %H:%M})\n'
         f'PLATFORM = "{platform}"\nLANGUAGE = "{lang}"\nBLACKLIST_IDS = {bl}\n'
@@ -253,7 +254,6 @@ class ProfilePanel(ctk.CTkFrame):
             self.v_package  = tk.StringVar()
             self.v_activity = tk.StringVar()
 
-        self._widget_refs = []
         self._build()
         self._load(self._active)
 
@@ -406,8 +406,6 @@ class App(ctk.CTk):
         self._proc   = None
         self._pn_ev  = threading.Event()
         self._pn_ans = ""
-        self._ow_ev  = threading.Event()
-        self._ow_ans = True
 
         self._active_tab = "tam"
 
@@ -473,9 +471,6 @@ class App(ctk.CTk):
         self._lbl_page_smart.configure(text=t("lbl_page_name"))
         self._page_entry_smart.configure(placeholder_text=t("ph_smart_page"))
         self._btn_submit_smart.configure(text=t("btn_send_report"))
-
-        self._btn_ow_yes.configure(text=t("btn_yes_overwrite"))
-        self._btn_ow_no.configure(text=t("btn_no_cancel"))
 
         self._upd_label()
 
@@ -779,6 +774,7 @@ class App(ctk.CTk):
             if hasattr(self, '_flow_entry'):
                 self._flow_entry.configure(state="normal", fg_color=BG_INPUT)
                 self._flow_active_label.configure(text="")
+                self.v_session_flow.set("")
         elif state == "connected":
             self.badge.set("connected")
             self.btn_stop.configure(state="normal")
@@ -965,7 +961,6 @@ class App(ctk.CTk):
     def _mk_smart_log(self, p):
         p.rowconfigure(1, weight=1)
         p.rowconfigure(2, weight=0)
-        p.rowconfigure(3, weight=0)
         p.columnconfigure(0, weight=1)
 
         hdr = ctk.CTkFrame(p, fg_color="white", corner_radius=0, height=36)
@@ -1180,12 +1175,12 @@ class App(ctk.CTk):
                           ("warn", C_WRN), ("info", C_INF), ("dim", T_MUT)]:
             self.log_box._textbox.tag_config(tag, foreground=col)
 
+        # Sayfa adı giriş satırı
         self.page_input_frame = ctk.CTkFrame(p, fg_color=BG_CARD,
                                               corner_radius=0, height=50)
         self.page_input_frame.grid(row=2, column=0, sticky="ew")
         self.page_input_frame.grid_propagate(False)
         self.page_input_frame.grid_remove()
-        p.rowconfigure(2, weight=0)
 
         self._lbl_page_full = ctk.CTkLabel(self.page_input_frame,
                                             text=t("lbl_page_name"),
@@ -1206,30 +1201,6 @@ class App(ctk.CTk):
             text_color=BG_MAIN, corner_radius=6,
             command=self._submit_page)
         self._btn_submit_page.pack(side="left", padx=10, pady=10)
-
-        self.ow_frame = ctk.CTkFrame(p, fg_color="#FEF6E4",
-                                      corner_radius=0, height=50)
-        self.ow_frame.grid(row=3, column=0, sticky="ew")
-        self.ow_frame.grid_propagate(False)
-        self.ow_frame.grid_remove()
-        p.rowconfigure(3, weight=0)
-        self.ow_label = ctk.CTkLabel(self.ow_frame, text="",
-                                      font=FL, text_color="#8C6A10")
-        self.ow_label.pack(side="left", padx=(14, 12), pady=10)
-        self._btn_ow_yes = ctk.CTkButton(
-            self.ow_frame, text=t("btn_yes_overwrite"),
-            font=FL, height=32, width=190,
-            fg_color="#2D6A2D", hover_color="#1a5220",
-            text_color="white", corner_radius=6,
-            command=lambda: self._submit_overwrite(True))
-        self._btn_ow_yes.pack(side="left", pady=10)
-        self._btn_ow_no = ctk.CTkButton(
-            self.ow_frame, text=t("btn_no_cancel"),
-            font=FL, height=32, width=150,
-            fg_color="#A32020", hover_color="#7B1515",
-            text_color="white", corner_radius=6,
-            command=lambda: self._submit_overwrite(False))
-        self._btn_ow_no.pack(side="left", padx=(8, 0), pady=10)
 
     # ── Platform toggle ───────────────────────────────────────────────────────
     def _toggle_platform(self, pf, init=False):
@@ -1421,17 +1392,6 @@ class App(ctk.CTk):
         self._pn_ans = name
         self._pn_ev.set()
 
-    def _show_overwrite(self, label_text):
-        self.ow_label.configure(text=t("msg_overwrite_q", label=label_text))
-        self.ow_frame.grid(row=3, column=0, sticky="ew")
-
-    def _hide_overwrite(self):
-        self.ow_frame.grid_remove()
-
-    def _submit_overwrite(self, yes: bool):
-        self._ow_ans = yes
-        self._ow_ev.set()
-
     # ── Build Summary çalıştır ────────────────────────────────────────────────
     def _run_summary(self):
         xl = self.v_summary_xl.get().strip()
@@ -1489,17 +1449,11 @@ class App(ctk.CTk):
                          .replace("\u015e", "s")
                          .lower())
 
-            # ── Sayfa adı prompt tespiti ──────────────────────────────────────
-            # checker_page_prompt key'indeki "PAGE_NAME_INPUT:" token'ını arar.
-            # Tüm dillerde bu token sabit kalır, dil bağımsız çalışır.
             def _is_page_prompt(text: str) -> bool:
                 return "page_name_input:" in _normalize(text)
 
             def handle(line):
                 nonlocal page_asked
-                low  = line.lower()
-                norm = _normalize(line)
-
                 if not page_asked and _is_page_prompt(line):
                     page_asked = True
                     self._log(line, "warn")
@@ -1511,23 +1465,6 @@ class App(ctk.CTk):
                     self._log(t("log_page_answer", name=answer), "info")
                     self._proc.stdin.write(answer + "\n")
                     self._proc.stdin.flush()
-                    return
-
-                if "uzerine yazmak istiyor musunuz" in norm or "[e/h]" in low:
-                    import re as _re
-                    m = _re.search(r"'([^']+)'", line)
-                    short = m.group(1) if m else line
-                    short = short[:60] + ("..." if len(short) > 60 else "")
-                    self.after(0, lambda s=short: self._show_overwrite(s))
-                    self._ow_ev.clear()
-                    self._ow_ev.wait(timeout=60)
-                    answer = "e" if self._ow_ans else "h"
-                    self.after(0, self._hide_overwrite)
-                    self._proc.stdin.write(answer + "\n")
-                    self._proc.stdin.flush()
-                    self._log(t("log_overwrite_yes") if self._ow_ans
-                               else t("log_overwrite_no"),
-                               "info" if self._ow_ans else "warn")
                     return
 
                 self._log(line, self._classify(line))
@@ -1543,11 +1480,7 @@ class App(ctk.CTk):
                         handle(line)
                 else:
                     buf += ch
-                    # Satır sonu gelmeden prompt'u yakala (input() \n basmaz)
                     if not page_asked and "page_name_input:" in _normalize(buf):
-                        handle(buf.strip())
-                        buf = ""
-                    if "[e/h]:" in buf.lower():
                         handle(buf.strip())
                         buf = ""
 
@@ -1594,9 +1527,7 @@ class App(ctk.CTk):
         self._set_busy(False)
         self.badge.set("idle")
         self._pn_ev.set()
-        self._ow_ev.set()
         self.after(0, self._hide_page_input)
-        self.after(0, self._hide_overwrite)
 
     def on_close(self):
         if self._proc:

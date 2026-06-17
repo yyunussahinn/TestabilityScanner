@@ -2,7 +2,7 @@
   "TR": {
     "app_title": "WHERE IS MY ID",
     "app_subtitle": "mobile accessibility reporter",
-    "app_version": "v4.4",
+    "app_version": "v4.5",
 
     "badge_idle":       "○  HAZIR",
     "badge_running":    "◉  ÇALIŞIYOR",
@@ -37,8 +37,6 @@
     "btn_clear_boxes":      "✕  Temizle",
     "btn_cancel":           "İptal",
     "btn_confirm":          "✓  Onayla  →  Raporu Oluştur",
-    "btn_yes_overwrite":    "✓  Evet (Uzerine Yaz)",
-    "btn_no_cancel":        "✗  Hayir (Iptal)",
 
     "lbl_excel":            "Excel:",
     "lbl_profile":          "Profil:",
@@ -111,7 +109,6 @@
     "msg_missing_info":     "Eksik Bilgi",
     "msg_min_output_fmt":   "En az bir çıktı formatı seçili olmalı.\n'Word' tekrar seçildi.",
     "msg_output_fmt_warn":  "Uyarı",
-    "msg_overwrite_q":      "Uzerine yazilsin mi?  {label}",
     "msg_page_empty":       "Saypa adi bos olamaz!",
     "msg_flow_empty":       "Önce akış adını girin (örn: loyalty, booking).",
     "msg_flow_title":       "Akış Adı",
@@ -130,8 +127,6 @@
     "log_summary_fail":     "build_summary.py hatayla sonlandi (exit code: {rc})",
     "log_process_stopped":  "Process durduruldu.",
     "log_page_answer":      "-> Sayfa adi: {name}",
-    "log_overwrite_yes":    "-> Uzerine yazma: Evet",
-    "log_overwrite_no":     "-> Uzerine yazma: Hayir",
     "log_excel_file":       "Excel: {name}",
     "log_summary_start":    "build_summary.py baslatiliyor...",
 
@@ -193,8 +188,6 @@
     "shared_ai_start":            "\n🤖 AI Suggestion üretiliyor ({total} element)...",
     "shared_ai_done":             "✅ AI Suggestion tamamlandı.\n",
     "shared_permission_error":    "❌ '{file}' dosyası başka bir uygulama tarafından açık. Lütfen Excel / Numbers'ı kapatıp tekrar çalıştırın.",
-    "shared_ask_overwrite":       "   ⚠️  {label} zaten mevcut. Üzerine yazmak istiyor musunuz? [e/h]: ",
-    "shared_ask_overwrite_retry": "   Lütfen 'e' (evet) veya 'h' (hayır) girin.",
 
     "smart_checker_connected":    "Driver kapatıldı.",
     "smart_checker_sep":          "========================================",
@@ -240,7 +233,7 @@
   "EN": {
     "app_title": "WHERE IS MY ID",
     "app_subtitle": "mobile accessibility reporter",
-    "app_version": "v4.4",
+    "app_version": "v4.5",
 
     "badge_idle":       "○  READY",
     "badge_running":    "◉  RUNNING",
@@ -275,8 +268,6 @@
     "btn_clear_boxes":      "✕  Clear",
     "btn_cancel":           "Cancel",
     "btn_confirm":          "✓  Confirm  →  Generate Report",
-    "btn_yes_overwrite":    "✓  Yes (Overwrite)",
-    "btn_no_cancel":        "✗  No (Cancel)",
 
     "lbl_excel":            "Excel:",
     "lbl_profile":          "Profile:",
@@ -349,7 +340,6 @@
     "msg_missing_info":     "Missing Info",
     "msg_min_output_fmt":   "At least one output format must be selected.\n'Word' re-selected.",
     "msg_output_fmt_warn":  "Warning",
-    "msg_overwrite_q":      "Overwrite?  {label}",
     "msg_page_empty":       "Page name cannot be empty!",
     "msg_flow_empty":       "Please enter a flow name first (e.g. loyalty, booking).",
     "msg_flow_title":       "Flow Name",
@@ -368,8 +358,6 @@
     "log_summary_fail":     "build_summary.py failed (exit code: {rc})",
     "log_process_stopped":  "Process stopped.",
     "log_page_answer":      "-> Page name: {name}",
-    "log_overwrite_yes":    "-> Overwrite: Yes",
-    "log_overwrite_no":     "-> Overwrite: No",
     "log_excel_file":       "Excel: {name}",
     "log_summary_start":    "Starting build_summary.py...",
 
@@ -431,8 +419,6 @@
     "shared_ai_start":            "\n🤖 Generating AI Suggestions ({total} elements)...",
     "shared_ai_done":             "✅ AI Suggestions complete.\n",
     "shared_permission_error":    "❌ '{file}' is open by another application. Please close Excel / Numbers and try again.",
-    "shared_ask_overwrite":       "   ⚠️  {label} already exists. Overwrite? [y/n]: ",
-    "shared_ask_overwrite_retry": "   Please enter 'y' (yes) or 'n' (no).",
 
     "smart_checker_connected":    "Driver closed.",
     "smart_checker_sep":          "========================================",
@@ -471,7 +457,6 @@
 
     "ai_api_error":          "API error: {error}",
     "ai_error_short":        "error: {error}",
-
 
     "lang_label": "Lang:"
   }
