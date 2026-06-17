@@ -86,16 +86,6 @@ def safe_save(wb: openpyxl.Workbook, filepath: str) -> None:
         raise
 
 
-# ── Kullanıcı onay soruları ───────────────────────────────────────────────────
-def ask_overwrite(label: str) -> bool:
-    while True:
-        sys.stdout.flush()
-        ans = input(t("shared_ask_overwrite", label=label)).strip().lower()
-        if ans in ("e", "evet", "y", "yes"):  return True
-        if ans in ("h", "hayır", "n", "no", "hayir"): return False
-        print(t("shared_ask_overwrite_retry"))
-
-
 # ── AI Suggestion zenginleştirici ─────────────────────────────────────────────
 def enrich_with_ai(all_elements: list, platform: str) -> list:
     try:
@@ -312,6 +302,7 @@ def generate_word(
     def _rgb(h: str) -> RGBColor:
         return RGBColor(*bytes.fromhex(h))
 
+    # Varsa üzerine yaz
     if os.path.exists(word_file):
         os.remove(word_file)
     doc = Document()

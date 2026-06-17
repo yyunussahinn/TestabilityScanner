@@ -31,7 +31,6 @@ _check_deps()
 
 import openpyxl
 import config as cfg
-# ── Dil ayarı: config.py'deki LANGUAGE değerini oku, yoksa EN kullan ────────
 from i18n import t, set_lang
 _lang = getattr(cfg, "LANGUAGE", "EN")
 set_lang(_lang)
@@ -64,7 +63,7 @@ for _s in DOCUMENT_SECTIONS:
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# ── Sayfa adı & üzerine yazma onayı ──────────────────────────────────────────
+# ── Sayfa adı ─────────────────────────────────────────────────────────────────
 sys.stdout.flush()
 PAGE_NAME = input(t("checker_page_prompt") + ": ").strip()
 
@@ -74,24 +73,6 @@ JSON_FILE       = os.path.join(OUTPUT_DIR, f"{PAGE_NAME}_android.json")
 SCREENSHOT_DIR  = os.path.join(OUTPUT_DIR, "screenshots_android")
 os.makedirs(SCREENSHOT_DIR, exist_ok=True)
 SCREENSHOT_PATH = os.path.join(SCREENSHOT_DIR, f"{PAGE_NAME}.png")
-
-if OUT_WORD and os.path.exists(WORD_FILE):
-    if not sh.ask_overwrite(f"Word {t('checker_file')} '{os.path.basename(WORD_FILE)}'"):
-        print("\n🚫 " + t("checker_cancelled")); raise SystemExit(0)
-
-if OUT_EXCEL and os.path.exists(EXCEL_FILE):
-    try:
-        _wb = openpyxl.load_workbook(EXCEL_FILE, read_only=True)
-        _has_sheet = PAGE_NAME in _wb.sheetnames
-        _wb.close()
-        if _has_sheet and not sh.ask_overwrite(f"Excel sheet '{PAGE_NAME}'"):
-            print("\n🚫 " + t("checker_cancelled")); raise SystemExit(0)
-    except openpyxl.utils.exceptions.InvalidFileException:
-        pass
-
-if OUT_JSON and os.path.exists(JSON_FILE):
-    if not sh.ask_overwrite(f"JSON {t('checker_file')} '{os.path.basename(JSON_FILE)}'"):
-        print("\n🚫 " + t("checker_cancelled")); raise SystemExit(0)
 
 print(f"\n🔧 {t('checker_platform')}: ANDROID")
 print(f"📁 {t('checker_output_fmt')}: {OUTPUT_FMT}")
