@@ -212,10 +212,10 @@ class SessionTab:
             summary = {
                 "label":     scan_label,
                 "flow":      self._flow_name,
-                "unique":    counts["ID Var"],
+                "unique":    counts["Unique ID"],
                 "undefined": counts["Undefined ID"],
-                "duplicate": counts["Duplicate"],
-                "missing":   counts["ID Yok"],
+                "duplicate": counts["Duplicate ID"],
+                "missing":   counts["Missing ID"],
                 "total":     len(elements),
                 "ss_path":   ss_path,
             }
@@ -310,10 +310,10 @@ class SessionTab:
                 self._log(t("session_log_sheet_name", name=sheet_name), "dim")
 
                 STATUS_ORDER = {
-                    "ID Var":       0,
+                    "Unique ID":       0,
                     "Undefined ID": 1,
-                    "Duplicate":    2,
-                    "ID Yok":       3,
+                    "Duplicate ID":    2,
+                    "Missing ID":       3,
                 }
 
                 first_scan = True
@@ -411,10 +411,10 @@ class SessionTab:
 
         for idx, elem in enumerate(ordered):
             elem_id    = f"{sheet_name}_element_{data_rows_so_far + idx + 1}"
-            status     = elem.get("status", "ID Yok")
+            status     = elem.get("status", "Missing ID")
             new_status = shr.get_new_status(status)
             row_num    = last_row + idx
-            pal        = shr.STATUS_PALETTE.get(status, shr.STATUS_PALETTE["ID Yok"])
+            pal        = shr.STATUS_PALETTE.get(status, shr.STATUS_PALETTE["Missing ID"])
             r_fill     = shr.fill(pal["row"] if idx % 2 == 0 else pal["alt"])
             ns_fill    = shr.fill(shr.NEW_STATUS_COLOR["row"] if idx % 2 == 0
                                   else shr.NEW_STATUS_COLOR["alt"])

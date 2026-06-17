@@ -252,7 +252,7 @@ class ProfilePanel(ctk.CTkFrame):
             self.v_package  = tk.StringVar()
             self.v_activity = tk.StringVar()
 
-        self._widget_refs = []   # (widget, refresh_cb) için
+        self._widget_refs = []
         self._build()
         self._load(self._active)
 
@@ -281,7 +281,6 @@ class ProfilePanel(ctk.CTkFrame):
 
         ff = ctk.CTkFrame(self, fg_color="transparent")
         ff.pack(fill="x")
-        self._le_widgets = []
         if self.platform == "ios":
             fields = [
                 ("Device Name",      "v_device",  ""),
@@ -300,9 +299,8 @@ class ProfilePanel(ctk.CTkFrame):
             var = getattr(self, varname)
             w = ctk.CTkFrame(ff, fg_color="transparent")
             w.pack(fill="x", padx=14, pady=2)
-            lbl_w = ctk.CTkLabel(w, text=lbl, font=FS, text_color=T_MUT,
-                                  width=155, anchor="w")
-            lbl_w.pack(side="left")
+            ctk.CTkLabel(w, text=lbl, font=FS, text_color=T_MUT,
+                          width=155, anchor="w").pack(side="left")
             ctk.CTkEntry(w, textvariable=var, placeholder_text=ph,
                          fg_color=BG_INPUT, border_color="#D8D0C0",
                          text_color=T_PRI, font=FS, corner_radius=6
@@ -412,7 +410,6 @@ class App(ctk.CTk):
 
         self._active_tab = "tam"
 
-        # Dil başlangıcı — config'den
         set_lang(self.cfg.get("language", "TR"))
         on_lang_change(self._on_lang_changed)
 
@@ -427,19 +424,15 @@ class App(ctk.CTk):
 
     # ── Dil değişimi ──────────────────────────────────────────────────────────
     def _on_lang_changed(self, lang: str):
-        """i18n listener — dil değişince tüm UI'ı yenile."""
         self.cfg["language"] = lang
         self._refresh_all_ui()
 
     def _refresh_all_ui(self):
-        """Tüm widget text'lerini aktif dile göre günceller."""
-        # Header
         self._lbl_subtitle.configure(text=t("app_subtitle"))
         self._lbl_version.configure(text=t("app_version"))
         self.badge.refresh()
         self._lbl_lang.configure(text=t("lang_label"))
 
-        # Footer butonlar
         self.btn_run.configure(text=t("btn_run"))
         self.btn_smart_connect.configure(text=t("btn_connect"))
         self.btn_session_start.configure(text=t("btn_session_start"))
@@ -450,15 +443,12 @@ class App(ctk.CTk):
         self._lbl_excel_footer.configure(text=t("lbl_excel"))
         self.xl_entry.configure(placeholder_text=t("ph_excel"))
 
-        # Tab butonlar
         self.btn_tab_tam.configure(text=t("tab_full_scan"))
         self.btn_tab_smart.configure(text=t("tab_smart_scan"))
         self.btn_tab_session.configure(text=t("tab_session_scan"))
 
-        # Config paneli
         self._refresh_config_panel()
 
-        # Log başlıkları
         self._lbl_console_full.configure(text=t("console_title_full"))
         self._btn_clear_full.configure(text=t("btn_clear"))
         self._lbl_console_smart.configure(text=t("console_title_smart"))
@@ -467,34 +457,27 @@ class App(ctk.CTk):
         self._lbl_session_hint.configure(text=t("session_hint"))
         self._btn_clear_session.configure(text=t("btn_clear"))
 
-        # Session table header
         for lbl, key in zip(self._tbl_hdr_labels,
                              ["tbl_col_scan", "tbl_col_unique", "tbl_col_undef",
                               "tbl_col_dup", "tbl_col_miss", "tbl_col_total"]):
             lbl.configure(text=t(key))
 
-        # Flow input
         self._lbl_flow.configure(text=t("lbl_flow_name"))
         self._flow_entry.configure(placeholder_text=t("ph_flow_name"))
 
-        # Page input (tam tarama)
         self._lbl_page_full.configure(text=t("lbl_page_name"))
         self._page_entry_full.configure(placeholder_text=t("ph_page_name"))
         self._btn_submit_page.configure(text=t("btn_send"))
 
-        # Page input (smart)
         self._lbl_page_smart.configure(text=t("lbl_page_name"))
         self._page_entry_smart.configure(placeholder_text=t("ph_smart_page"))
         self._btn_submit_smart.configure(text=t("btn_send_report"))
 
-        # Overwrite frame
         self._btn_ow_yes.configure(text=t("btn_yes_overwrite"))
         self._btn_ow_no.configure(text=t("btn_no_cancel"))
 
-        # Platform label
         self._upd_label()
 
-        # Session table yenile
         if hasattr(self, '_session_ref'):
             self.after(0, self._update_session_table)
 
@@ -570,7 +553,6 @@ class App(ctk.CTk):
                                            font=FS, text_color="black")
         self._lbl_subtitle.pack(side="left", padx=4)
 
-        # ── Dil seçici (sağ üst köşe) ────────────────────────────────────────
         lang_frame = ctk.CTkFrame(hdr, fg_color="#EDE8DF", corner_radius=8)
         lang_frame.pack(side="right", padx=(0, 12), pady=8)
 
@@ -593,7 +575,6 @@ class App(ctk.CTk):
             command=self._change_lang,
         )
         self._lang_menu.pack(side="left", padx=(0, 8), pady=6)
-        # ─────────────────────────────────────────────────────────────────────
 
         self.badge = Badge(hdr)
         self.badge.pack(side="right", padx=4)
@@ -602,7 +583,7 @@ class App(ctk.CTk):
         self._lbl_version.pack(side="right", padx=4)
 
     def _change_lang(self, lang: str):
-        set_lang(lang)   # i18n listener _on_lang_changed'i tetikler
+        set_lang(lang)
 
     def _mk_footer(self):
         foot = ctk.CTkFrame(self, fg_color="#FFFFFF", corner_radius=0, height=66)
@@ -651,7 +632,6 @@ class App(ctk.CTk):
             text_color="#FFFFFF", corner_radius=8,
             command=self._stop_proc)
 
-        # Sağ: Excel seç + Build Summary
         rf = ctk.CTkFrame(foot, fg_color="transparent")
         rf.pack(side="right", padx=12, pady=10)
 
@@ -1315,10 +1295,10 @@ class App(ctk.CTk):
 
     def _classify(self, line):
         l = line.lower()
-        if any(k in l for k in ("kaydedildi", "tamamlandi", "saved", "completed", "done")): return "ok"
-        if any(k in l for k in ("hata", "error", "traceback", "exception", "failed")): return "err"
+        if any(k in l for k in ("saved", "completed", "done", "kaydedildi", "tamamlandi")): return "ok"
+        if any(k in l for k in ("error", "hata", "traceback", "exception", "failed")): return "err"
         if any(k in l for k in ("warning", "uyar")): return "warn"
-        if any(k in l for k in ("driver", "appium", "baslatilyior", "baslatil", "starting")): return "info"
+        if any(k in l for k in ("driver", "appium", "starting", "baslatil")): return "info"
         return ""
 
     # ── Config toplama / doğrulama ────────────────────────────────────────────
@@ -1484,7 +1464,7 @@ class App(ctk.CTk):
             kwargs={"xl_override": xl},
             daemon=True).start()
 
-    # ── Subprocess stream ──────────────────────────────────────────────────────
+    # ── Subprocess stream ─────────────────────────────────────────────────────
     def _stream(self, cmd, cwd, done_cb, xl_override=None):
         env = os.environ.copy()
         env["PYTHONUNBUFFERED"] = "1"
@@ -1502,18 +1482,17 @@ class App(ctk.CTk):
             page_asked = False
 
             def _normalize(s):
-                return s.replace("\u0131", "i").replace("\u0130", "i").lower()
+                return (s.replace("\u0131", "i")
+                         .replace("\u0130", "i")
+                         .replace("\u015f", "s")
+                         .replace("\u015e", "s")
+                         .lower())
 
-            def _is_page_prompt(text):
-                from i18n import t, available_langs
-                n = _normalize(text)
-                # Tüm dillerdeki checker_page_prompt değerlerini kontrol et
-                for lang in available_langs():
-                    import i18n as _i18n
-                    prompt_val = _i18n._strings.get(lang, {}).get("checker_page_prompt", "")
-                    if prompt_val and _normalize(prompt_val) in n:
-                        return True
-                return False
+            # ── Sayfa adı prompt tespiti ──────────────────────────────────────
+            # checker_page_prompt key'indeki "PAGE_NAME_INPUT:" token'ını arar.
+            # Tüm dillerde bu token sabit kalır, dil bağımsız çalışır.
+            def _is_page_prompt(text: str) -> bool:
+                return "page_name_input:" in _normalize(text)
 
             def handle(line):
                 nonlocal page_asked
@@ -1563,11 +1542,10 @@ class App(ctk.CTk):
                         handle(line)
                 else:
                     buf += ch
-                    if not page_asked:
-                        nb = _normalize(buf)
-                        if "sayfa adi gir" in nb:
-                            handle(buf.strip())
-                            buf = ""
+                    # Satır sonu gelmeden prompt'u yakala (input() \n basmaz)
+                    if not page_asked and "page_name_input:" in _normalize(buf):
+                        handle(buf.strip())
+                        buf = ""
                     if "[e/h]:" in buf.lower():
                         handle(buf.strip())
                         buf = ""
