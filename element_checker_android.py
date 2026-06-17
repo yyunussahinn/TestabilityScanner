@@ -24,15 +24,19 @@ def _check_deps() -> None:
         except ImportError:
             missing.append(f"   {pkg:12s} →  pip install {pip_name}")
     if missing:
-        print("\n❌ " + t("checker_missing_deps") + "\n" + "\n".join(missing))
+        print("\n❌ Missing dependencies:\n" + "\n".join(missing))
         raise SystemExit(1)
 
 _check_deps()
 
 import openpyxl
 import config as cfg
+# ── Dil ayarı: config.py'deki LANGUAGE değerini oku, yoksa EN kullan ────────
+from i18n import t, set_lang
+_lang = getattr(cfg, "LANGUAGE", "EN")
+set_lang(_lang)
+
 import shared as sh
-from i18n import t
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from appium.options.android import UiAutomator2Options

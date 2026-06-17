@@ -1,5 +1,6 @@
-# WHERE IS MY ID — config.py  (17.06.2026 10:55)
+# WHERE IS MY ID — config.py  (17.06.2026 11:08)
 PLATFORM = "android"
+LANGUAGE = "TR"
 BLACKLIST_IDS = ["LinearLayout", "FrameLayout", "text-input-flat-label-inactive", "text-input-underline", "right-icon-adornment-container", "right-icon-adornment", "text-input-flat", "statusBarBackground", "content", "action_bar_root", "navigationBarBackground", "exo_content_frame"]
 OUTPUT_FORMAT = "excel+json"
 DOCUMENT_SECTIONS = ["unique", "undefined", "duplicate", "missing"]
