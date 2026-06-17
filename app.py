@@ -134,9 +134,10 @@ def write_config_py(cfg, path):
     sec     = json.dumps(cfg.get("document_sections", []))
     od      = cfg.get("output_dir", "").replace("\\", "/")
     out_fmt = _build_output_format(cfg)
+    lang = cfg.get("language", "EN")
     txt = (
         f'# WHERE IS MY ID — config.py  ({datetime.now():%d.%m.%Y %H:%M})\n'
-        f'PLATFORM = "{platform}"\nBLACKLIST_IDS = {bl}\n'
+        f'PLATFORM = "{platform}"\nLANGUAGE = "{lang}"\nBLACKLIST_IDS = {bl}\n'
         f'OUTPUT_FORMAT = "{out_fmt}"\nDOCUMENT_SECTIONS = {sec}\n'
         f'OUTPUT_DIR = "{od}"\nAPPIUM_SERVER = "{cfg["appium_server"]}"\n{plat}'
     )

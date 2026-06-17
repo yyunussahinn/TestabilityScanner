@@ -32,7 +32,9 @@ _check_deps()
 import openpyxl
 import config as cfg
 import shared as sh
-from i18n import t
+from i18n import t, set_lang
+_lang = getattr(cfg, "LANGUAGE", "EN")
+set_lang(_lang)
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from appium.options.ios import XCUITestOptions
