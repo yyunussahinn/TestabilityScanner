@@ -231,6 +231,9 @@
     "checker_page_not_found": "(bulunamadı)",
     "checker_page_prompt": "PAGE_NAME_INPUT: Sayfa adı gir",
 
+    "ai_api_error":          "API hatası: {error}",
+    "ai_error_short":        "hata: {error}",
+
     "lang_label": "Dil:"
   },
 
@@ -465,6 +468,9 @@
     "checker_invalid_section":"Invalid DOCUMENT_SECTIONS value: '{section}'",
     "checker_page_not_found": "(not found)",
     "checker_page_prompt": "PAGE_NAME_INPUT: Enter page name",
+
+    "ai_api_error":          "API error: {error}",
+    "ai_error_short":        "error: {error}",
 
 
     "lang_label": "Lang:"

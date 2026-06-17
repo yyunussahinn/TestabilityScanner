@@ -1,10 +1,10 @@
 {
-  "platform": "ios",
+  "platform": "android",
   "language": "EN",
-  "output_word": true,
+  "output_word": false,
   "output_excel": true,
   "output_json": true,
-  "output_dir": "/Users/yunus.sahin/Library/CloudStorage/OneDrive-TESTINIUMTeknolojiYazılımA.Ş/Test",
+  "output_dir": "/Users/yunus.sahin/Library/CloudStorage/OneDrive-TESTINIUMTeknolojiYazılımA.Ş/Demo/Tam Tarama",
   "appium_server": "http://127.0.0.1:4723",
   "document_sections": [
     "unique",

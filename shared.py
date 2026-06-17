@@ -2,7 +2,6 @@
 shared.py — Where is My Id  (i18n)
 ────────────────────────────────────────────────────────────────
 Ortak sabitler, renk paleti, stil yardımcıları ve çıktı üreticileri.
-Tüm kullanıcıya görünen mesajlar i18n.t() üzerinden yönetilir.
 """
 
 import json as _json
@@ -45,7 +44,7 @@ STATUS_PALETTE: dict[str, dict] = {
     STATUS_DUPLICATE: {"hdr": "7B3F00", "row": "FAEEDA", "alt": "FEF6E4", "txt": "3B1F00"},
     STATUS_UNIQUE:    {"hdr": "375623", "row": "E2EFDA", "alt": "EAF3DE", "txt": "173404"},
 }
-NEW_STATUS_COLOR: dict[str, str]    = {
+NEW_STATUS_COLOR: dict[str, str] = {
     "hdr": "843C0C", "row": "FDE9D9", "alt": "FEF3EC", "txt": "843C0C"}
 AI_SUGGESTION_COLOR: dict[str, str] = {
     "hdr": "1F4E79", "row": "DEEAF1", "alt": "EBF3F9", "txt": "1F4E79"}
@@ -89,7 +88,6 @@ def safe_save(wb: openpyxl.Workbook, filepath: str) -> None:
 
 # ── Kullanıcı onay soruları ───────────────────────────────────────────────────
 def ask_overwrite(label: str) -> bool:
-    """[e/h] veya [y/n] sorusu; dile göre doğru cevap gelene kadar tekrar eder."""
     while True:
         sys.stdout.flush()
         ans = input(t("shared_ask_overwrite", label=label)).strip().lower()
