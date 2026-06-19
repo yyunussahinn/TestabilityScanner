@@ -1429,6 +1429,7 @@ class App(ctk.CTk):
         cfg = self._collect()
         save_config(cfg)
         self.cfg = cfg
+        write_config_py(cfg, os.path.join(_BASE, "config.py"))
 
         self._clear_log()
         self._log(t("log_excel_file", name=os.path.basename(xl)), "info")
