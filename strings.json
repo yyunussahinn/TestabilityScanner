@@ -176,7 +176,9 @@
     "session_log_screenshot_err": "⚠️  {label} screenshot eklenemedi: {error}",
     "session_log_ss_add_error":   "⚠️  Screenshot ekleme hatası: {error}",
     "session_log_sheet_missing":  "⚠️  Sheet '{sheet}' bulunamadı, screenshot eklenemedi.",
-    "session_scan_label": "Tarama",
+    "session_scan_label":         "Tarama",
+    "session_run_label":          "oturum",
+    "session_log_json_saved":     "JSON: {file}",
 
     "shared_word_saved":          "📄 Word kaydedildi: {file}",
     "shared_excel_saved":         "📊 Excel kaydedildi: {file}  (sheet: {sheet})",
@@ -418,7 +420,9 @@
     "session_log_screenshot_err": "⚠️  Could not add {label} screenshot: {error}",
     "session_log_ss_add_error":   "⚠️  Screenshot add error: {error}",
     "session_log_sheet_missing":  "⚠️  Sheet '{sheet}' not found, screenshots not added.",
-    "session_scan_label": "Scan",
+    "session_scan_label":         "Scan",
+    "session_run_label":          "run",
+    "session_log_json_saved":     "JSON: {file}",
 
     "shared_word_saved":          "📄 Word saved: {file}",
     "shared_excel_saved":         "📊 Excel saved: {file}  (sheet: {sheet})",

@@ -771,6 +771,9 @@ class App(ctk.CTk):
             self.badge.set("idle")
             self.btn_stop.configure(state="disabled")
             self.btn_summary.configure(state="normal")
+            if hasattr(self, '_btn_clear_session'):
+                self._btn_clear_session.configure(
+                    state="normal", fg_color="#7B1515", hover_color="#5a0f0f")
             if hasattr(self, '_flow_entry'):
                 self._flow_entry.configure(state="normal", fg_color=BG_INPUT)
                 self._flow_active_label.configure(text="")
@@ -779,16 +782,22 @@ class App(ctk.CTk):
             self.badge.set("connected")
             self.btn_stop.configure(state="normal")
             self.btn_summary.configure(state="disabled")
+            if hasattr(self, '_btn_clear_session'):
+                self._btn_clear_session.configure(state="disabled", fg_color="#9E9E9E")
             self.btn_session_collect.configure(state="normal",
                 fg_color=ACCENT_IOS, hover_color=ACCENT_IOS_DK)
             self.btn_session_finish.configure(state="normal",
                 fg_color="#8C6A10", hover_color="#6a4e0c")
         elif state == "collecting":
             self.badge.set("collecting")
+            if hasattr(self, '_btn_clear_session'):
+                self._btn_clear_session.configure(state="disabled", fg_color="#9E9E9E")
             self.btn_session_collect.configure(state="disabled", fg_color="#9E9E9E")
             self.btn_session_finish.configure(state="disabled", fg_color="#9E9E9E")
         elif state == "finishing":
             self.badge.set("finishing")
+            if hasattr(self, '_btn_clear_session'):
+                self._btn_clear_session.configure(state="disabled", fg_color="#9E9E9E")
             self.btn_session_collect.configure(state="disabled", fg_color="#9E9E9E")
             self.btn_session_finish.configure(state="disabled", fg_color="#9E9E9E")
             self.btn_stop.configure(state="disabled")
@@ -930,9 +939,17 @@ class App(ctk.CTk):
                          anchor="center").pack(side="left", padx=2)
 
     def _clear_session_log(self):
+        # Sadece oturum kapalıyken (idle) etkili olmalı.
+        if getattr(self, '_session_state', 'idle') != 'idle':
+            return
+
         self.session_log_box.configure(state="normal")
         self.session_log_box.delete("1.0", "end")
         self.session_log_box.configure(state="disabled")
+
+        if hasattr(self, '_session_ref'):
+            self._session_ref.reset()
+        self._update_session_table()
 
     def _session_start(self):
         if hasattr(self, '_session_ref'):

@@ -1,8 +1,13 @@
 """
-session_tab.py — Where is My Id  v1.1  (i18n)
+session_tab.py — Where is My Id  v1.2  (i18n)
 ────────────────────────────────────────────────────────────────
 Multi-page session tarama mantığı.
 Tüm log ve hata mesajları i18n.t() üzerinden yönetilir.
+
+v1.2 değişiklikleri:
+  - Aynı flow adıyla tekrar çalıştırıldığında Excel / Word / JSON
+    tutarlı biçimde "oturum N" suffix'i alır (strings.json: session_run_label).
+  - JSON dosya adından tarih-saat damgası kaldırıldı.
 """
 
 import threading
@@ -287,35 +292,41 @@ class SessionTab:
             doc_sections = cfg.get("document_sections",
                                    ["unique", "undefined", "duplicate", "missing"])
             plat_suffix  = "IOS" if self._platform == "ios" else "Android"
-            ts           = datetime.now().strftime("%Y%m%d_%H%M%S")
             flow_safe    = self._flow_name.replace(" ", "_")
 
+            # ── Oturum numarasını belirle ─────────────────────────────────────
+            # Excel'deki mevcut sheet sayısına bakarak ortak session_num hesapla.
+            # Excel, Word ve JSON hepsi aynı suffix'i kullanır: "oturum N"
+            excel_file = os.path.join(
+                output_dir, f"Session_{flow_safe}_{plat_suffix}.xlsx")
+
+            import openpyxl as _opxl
+            if os.path.exists(excel_file):
+                _wb_check = _opxl.load_workbook(excel_file, read_only=True)
+                existing  = [s for s in _wb_check.sheetnames
+                             if s.startswith(self._flow_name)]
+                _wb_check.close()
+                session_num = len(existing) + 1
+            else:
+                session_num = 1
+
+            # "oturum 1" değil, ilk çalışmada suffix yok — aynı Excel davranışı
+            run_label    = t("session_run_label")
+            session_suffix = ("" if session_num == 1
+                              else f" - {run_label} {session_num}")
+            sheet_name = self._flow_name + session_suffix
+
+            self._log(t("session_log_sheet_name", name=sheet_name), "dim")
+
+            STATUS_ORDER = {
+                "Unique ID":    0,
+                "Undefined ID": 1,
+                "Duplicate ID": 2,
+                "Missing ID":   3,
+            }
+
+            # ── Excel ─────────────────────────────────────────────────────────
             if "excel" in fmt_parts:
-                excel_file = os.path.join(
-                    output_dir, f"Session_{flow_safe}_{plat_suffix}.xlsx")
-
-                import openpyxl as _opxl
-                if os.path.exists(excel_file):
-                    _wb_check = _opxl.load_workbook(excel_file, read_only=True)
-                    existing  = [s for s in _wb_check.sheetnames
-                                 if s.startswith(self._flow_name)]
-                    _wb_check.close()
-                    session_num = len(existing) + 1
-                else:
-                    session_num = 1
-
-                sheet_name = (self._flow_name if session_num == 1
-                              else f"{self._flow_name} - oturum {session_num}")
-
-                self._log(t("session_log_sheet_name", name=sheet_name), "dim")
-
-                STATUS_ORDER = {
-                    "Unique ID":       0,
-                    "Undefined ID": 1,
-                    "Duplicate ID":    2,
-                    "Missing ID":       3,
-                }
-
                 first_scan = True
                 for s in self._page_summary:
                     scan_elems = [e for e in self._all_elements
@@ -342,14 +353,16 @@ class SessionTab:
                 self._log(t("session_log_excel_saved",
                              file=excel_file, sheet=sheet_name), "ok")
 
+            # ── Word ──────────────────────────────────────────────────────────
             if "word" in fmt_parts:
+                # Tüm scan'ler için tek birleşik Word dosyası (flow bazlı)
+                word_file = os.path.join(
+                    output_dir,
+                    f"Session_{flow_safe}{session_suffix}_{plat_suffix}.docx")
+
                 for s in self._page_summary:
-                    scan_elems  = [e for e in self._all_elements
-                                   if e.get("page") == s["label"]]
-                    safe_lbl    = (s["label"].replace(" ", "_")
-                                   .replace("-", "").replace("/", "_"))
-                    word_file   = os.path.join(
-                        output_dir, f"{safe_lbl}_{plat_suffix}.docx")
+                    scan_elems = [e for e in self._all_elements
+                                  if e.get("page") == s["label"]]
                     shr.generate_word(
                         all_elements=scan_elems,
                         page_name=s["label"],
@@ -358,19 +371,22 @@ class SessionTab:
                         platform=self._platform,
                         screenshot_path=s.get("ss_path", ""),
                     )
-                    self._log(t("session_log_word_saved",
-                                 file=os.path.basename(word_file)), "ok")
+                self._log(t("session_log_word_saved",
+                             file=os.path.basename(word_file)), "ok")
 
+            # ── JSON ──────────────────────────────────────────────────────────
             if "json" in fmt_parts:
                 json_file = os.path.join(
                     output_dir,
-                    f"Session_{flow_safe}_{self._platform}_{ts}.json")
+                    f"Session_{flow_safe}{session_suffix}_{self._platform}.json")
                 shr.generate_json(
                     elements=self._all_elements,
                     page_name=self._flow_name,
                     json_file=json_file,
                     platform=self._platform,
                 )
+                self._log(t("session_log_json_saved",
+                             file=os.path.basename(json_file)), "ok")
 
             self._log(t("session_log_sep"), "dim")
             self._log(
@@ -517,6 +533,14 @@ class SessionTab:
 
         except Exception as ex:
             self._log(t("session_log_ss_add_error", error=ex), "warn")
+
+    # ── Verileri sıfırla (sadece oturum kapalıyken çağrılmalı) ─────────────────
+    def reset(self):
+        self._scan_counter = 0
+        self._all_elements.clear()
+        self._page_summary.clear()
+        if self._update_table_cb:
+            self.app.after(0, self._update_table_cb)
 
     # ── Oturumu iptal et ──────────────────────────────────────────────────────
     def abort_session(self):
