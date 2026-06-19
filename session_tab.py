@@ -270,6 +270,46 @@ class SessionTab:
 
         threading.Thread(target=self._finish_worker, daemon=True).start()
 
+    # ── Oturum numarası: Word / Excel / JSON için ortak "ilk boş slot" ────────
+    def _resolve_session_num(self, output_dir, flow_safe, plat_suffix,
+                              excel_file, run_label) -> int:
+        """
+        Eskiden sadece Excel sheet sayısına bakılıyordu. Sorun: önceki bir
+        oturumda örn. sadece Excel üretilmiş (Word kapalıyken), bir sonraki
+        oturumda session_num yine 1 hesaplanıyor ve Word, önceki oturumun
+        dosyasının üzerine yazıyordu.
+
+        Artık Word dosyası / JSON dosyası / Excel sheet'i birlikte kontrol
+        edilip, bu flow + platform için üçünden de HİÇBİRİNİN var olmadığı
+        ilk N bulunur. Böylece hangi formatlar daha önce üretilmiş olursa
+        olsun, Word asla eski bir oturumun dosyasının üzerine yazılmaz.
+        """
+        n = 1
+        while True:
+            suffix     = "" if n == 1 else f" - {run_label} {n}"
+            sheet_name = self._flow_name + suffix
+            word_file  = os.path.join(
+                output_dir, f"Session_{flow_safe}{suffix}_{plat_suffix}.docx")
+            json_file  = os.path.join(
+                output_dir, f"Session_{flow_safe}{suffix}_{self._platform}.json")
+
+            word_exists = os.path.exists(word_file)
+            json_exists = os.path.exists(json_file)
+
+            sheet_exists = False
+            if os.path.exists(excel_file):
+                try:
+                    import openpyxl as _opxl
+                    wb_check = _opxl.load_workbook(excel_file, read_only=True)
+                    sheet_exists = sheet_name in wb_check.sheetnames
+                    wb_check.close()
+                except Exception:
+                    sheet_exists = False
+
+            if not (word_exists or json_exists or sheet_exists):
+                return n
+            n += 1
+
     def _finish_worker(self):
         try:
             if self._driver:
@@ -295,23 +335,18 @@ class SessionTab:
             flow_safe    = self._flow_name.replace(" ", "_")
 
             # ── Oturum numarasını belirle ─────────────────────────────────────
-            # Excel'deki mevcut sheet sayısına bakarak ortak session_num hesapla.
-            # Excel, Word ve JSON hepsi aynı suffix'i kullanır: "oturum N"
+            # Sadece Excel sheet sayısına bakmak yeterli değil: bir önceki
+            # oturumda örn. sadece Excel üretilmiş, Word üretilmemiş olabilir.
+            # Bu yüzden Word / Excel / JSON üçü birlikte kontrol edilip bu
+            # flow + platform için "ilk boş slot" bulunur. Böylece Word hiçbir
+            # zaman önceki bir oturumun dosyasının üzerine yazılmaz.
             excel_file = os.path.join(
                 output_dir, f"Session_{flow_safe}_{plat_suffix}.xlsx")
-
-            import openpyxl as _opxl
-            if os.path.exists(excel_file):
-                _wb_check = _opxl.load_workbook(excel_file, read_only=True)
-                existing  = [s for s in _wb_check.sheetnames
-                             if s.startswith(self._flow_name)]
-                _wb_check.close()
-                session_num = len(existing) + 1
-            else:
-                session_num = 1
+            run_label   = t("session_run_label")
+            session_num = self._resolve_session_num(
+                output_dir, flow_safe, plat_suffix, excel_file, run_label)
 
             # "oturum 1" değil, ilk çalışmada suffix yok — aynı Excel davranışı
-            run_label    = t("session_run_label")
             session_suffix = ("" if session_num == 1
                               else f" - {run_label} {session_num}")
             sheet_name = self._flow_name + session_suffix
@@ -355,22 +390,33 @@ class SessionTab:
 
             # ── Word ──────────────────────────────────────────────────────────
             if "word" in fmt_parts:
-                # Tüm scan'ler için tek birleşik Word dosyası (flow bazlı)
+                # Tüm scan'ler için tek birleşik Word dosyası (flow bazlı).
+                # NOT: shared.generate_word her çağrıda dosyayı sıfırdan
+                # oluşturuyor. Eskiden döngü içinde sayfa başına çağrılıyordu
+                # ve sonuçta dosyada sadece SON sayfa kalıyordu. Artık tüm
+                # oturumun elementleri birleştirilip TEK seferde yazılıyor.
                 word_file = os.path.join(
                     output_dir,
                     f"Session_{flow_safe}{session_suffix}_{plat_suffix}.docx")
 
+                combined_elems = []
                 for s in self._page_summary:
-                    scan_elems = [e for e in self._all_elements
-                                  if e.get("page") == s["label"]]
-                    shr.generate_word(
-                        all_elements=scan_elems,
-                        page_name=s["label"],
-                        word_file=word_file,
-                        document_sections=doc_sections,
-                        platform=self._platform,
-                        screenshot_path=s.get("ss_path", ""),
-                    )
+                    combined_elems.extend(
+                        e for e in self._all_elements
+                        if e.get("page") == s["label"])
+
+                first_ss = next(
+                    (s.get("ss_path", "") for s in self._page_summary
+                     if s.get("ss_path")), "")
+
+                shr.generate_word(
+                    all_elements=combined_elems,
+                    page_name=self._flow_name,
+                    word_file=word_file,
+                    document_sections=doc_sections,
+                    platform=self._platform,
+                    screenshot_path=first_ss,
+                )
                 self._log(t("session_log_word_saved",
                              file=os.path.basename(word_file)), "ok")
 
