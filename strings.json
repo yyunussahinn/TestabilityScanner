@@ -22,7 +22,7 @@
     "btn_session_collect":  "📥  SAYFAYI TOPLA",
     "btn_session_finish":   "✅  BİTTİ - RAPOR OLUŞTUR",
     "btn_stop":             "■  DURDUR",
-    "btn_merge_sheets":     "📊  Merge Sheets",
+    "btn_merge_sheets":     "📊 Sheet Birleştir",
     "btn_clear":            "Temizle",
     "btn_send_report":      "▶  Raporu Oluştur",
     "btn_send":             "Gonder",
@@ -176,7 +176,9 @@
     "session_log_screenshot_err": "⚠️  {label} screenshot eklenemedi: {error}",
     "session_log_ss_add_error":   "⚠️  Screenshot ekleme hatası: {error}",
     "session_log_sheet_missing":  "⚠️  Sheet '{sheet}' bulunamadı, screenshot eklenemedi.",
-    "session_scan_label": "Tarama",
+    "session_scan_label":         "Tarama",
+    "session_run_label":          "oturum",
+    "session_log_json_saved":     "JSON: {file}",
 
     "shared_word_saved":          "📄 Word kaydedildi: {file}",
     "shared_excel_saved":         "📊 Excel kaydedildi: {file}  (sheet: {sheet})",
@@ -226,6 +228,17 @@
 
     "ai_api_error":          "API hatası: {error}",
     "ai_error_short":        "hata: {error}",
+
+    "bs_file_not_found":  "❌ Dosya bulunamadı: {file}",
+    "bs_sheets_found":    "📂 {n} sayfa sheet'i bulundu: {names}",
+    "bs_sheet_stats":     "   ✓ {name}  →  Missing:{missing}  Undefined:{undefined}  Duplicate:{duplicate}  Unique:{unique}  (toplam {total})",
+    "bs_data_created":    "✅ Data sheet oluşturuldu — {n} satır",
+    "bs_summary_created": "✅ Summary sheet oluşturuldu — {n} sayfa, {total} element",
+    "bs_task_created":    "✅ Task sheet oluşturuldu — {n} satır",
+    "bs_saved":           "📊 Dosya güncellendi: {file}",
+    "bs_sheet_order":     "   Sheet sırası: Data → Summary → Task → {names}",
+    "bs_task_hint":       "💡 Task sheet'indeki New Status ve AI Suggestion formülle bağlı.",
+    "bs_task_hint2":      "   Developer/QA kaynak sheet'te güncellediğinde Task otomatik yansır.",
 
     "lang_label": "Dil:"
   },
@@ -354,7 +367,7 @@
     "log_separator":        "------------------------------------------------------------",
     "log_script_ok":        "Script completed successfully.",
     "log_script_fail":      "Script failed (exit code: {rc})",
-    "log_summary_ok":       "Excel completed.",
+    "log_summary_ok":       "Excel updated.",
     "log_summary_fail":     "The Excel update ended with an error (exit code: {rc})",
     "log_process_stopped":  "Process stopped.",
     "log_page_answer":      "-> Page name: {name}",
@@ -407,7 +420,9 @@
     "session_log_screenshot_err": "⚠️  Could not add {label} screenshot: {error}",
     "session_log_ss_add_error":   "⚠️  Screenshot add error: {error}",
     "session_log_sheet_missing":  "⚠️  Sheet '{sheet}' not found, screenshots not added.",
-    "session_scan_label": "Scan",
+    "session_scan_label":         "Scan",
+    "session_run_label":          "run",
+    "session_log_json_saved":     "JSON: {file}",
 
     "shared_word_saved":          "📄 Word saved: {file}",
     "shared_excel_saved":         "📊 Excel saved: {file}  (sheet: {sheet})",
@@ -457,6 +472,17 @@
 
     "ai_api_error":          "API error: {error}",
     "ai_error_short":        "error: {error}",
+
+    "bs_file_not_found":  "❌ File not found: {file}",
+    "bs_sheets_found":    "📂 {n} page sheets found: {names}",
+    "bs_sheet_stats":     "   ✓ {name}  →  Missing:{missing}  Undefined:{undefined}  Duplicate:{duplicate}  Unique:{unique}  (total {total})",
+    "bs_data_created":    "✅ Data sheet created — {n} rows",
+    "bs_summary_created": "✅ Summary sheet created — {n} pages, {total} elements",
+    "bs_task_created":    "✅ Task sheet created — {n} rows",
+    "bs_saved":           "📊 File updated: {file}",
+    "bs_sheet_order":     "   Sheet order: Data → Summary → Task → {names}",
+    "bs_task_hint":       "💡 New Status and AI Suggestion in Task sheet are formula-linked.",
+    "bs_task_hint2":      "   When Developer/QA updates the source sheet, Task reflects it automatically.",
 
     "lang_label": "Lang:"
   }

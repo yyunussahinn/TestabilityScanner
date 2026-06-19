@@ -22,6 +22,14 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 import shared as sh
+from i18n import t, set_lang
+
+try:
+    import config as _cfg
+    set_lang(getattr(_cfg, "LANGUAGE", "EN"))
+except Exception:
+    set_lang("EN")
+
 
 # ── Excel dosya yolu (arg > env > sabit) ─────────────────────────────────────
 _DEFAULT_EXCEL = "/Users/yunus.sahin/PycharmProjects/PythonProject/PIA_Elements/Revize_Elements_Report_Android.xlsx"
@@ -75,7 +83,7 @@ if not os.path.exists(EXCEL_FILE):
 wb = openpyxl.load_workbook(EXCEL_FILE)
 
 page_sheets = [s for s in wb.sheetnames if s not in SKIP_SHEETS]
-print(f"📂 {len(page_sheets)} sayfa sheet'i bulundu: {', '.join(page_sheets)}")
+print(t("bs_sheets_found", n=len(page_sheets), names=", ".join(page_sheets)))
 
 # ─────────────────────────────────────────────────────────────
 # 2. Tüm sheet'lerden veriyi oku
@@ -125,12 +133,10 @@ for sheet_name in page_sheets:
         found += 1
 
     page_stats[sheet_name] = counts
-    print(f"   ✓ {sheet_name:25s} → "
-          f"Missing:{counts[sh.STATUS_MISSING]:3d}  "
-          f"Undefined:{counts[sh.STATUS_UNDEFINED]:3d}  "
-          f"Duplicate:{counts[sh.STATUS_DUPLICATE]:3d}  "
-          f"Unique:{counts[sh.STATUS_UNIQUE]:3d}  "
-          f"(toplam {found})")
+
+    print(t("bs_sheet_stats", name=f"{sheet_name:25s}", missing=f"{counts[sh.STATUS_MISSING]:3d}",
+            undefined=f"{counts[sh.STATUS_UNDEFINED]:3d}", duplicate=f"{counts[sh.STATUS_DUPLICATE]:3d}",
+            unique=f"{counts[sh.STATUS_UNIQUE]:3d}", total=found))
 
 # ─────────────────────────────────────────────────────────────
 # 3. "Data" sheet'i oluştur
@@ -188,7 +194,7 @@ for idx, row in enumerate(all_rows):
 for ci, w in enumerate(WIDTHS_D, 1):
     wd.column_dimensions[get_column_letter(ci)].width = w
 
-print(f"\n✅ Data sheet oluşturuldu — {len(all_rows)} satır")
+print(t("bs_data_created", n=len(all_rows)))
 
 # ─────────────────────────────────────────────────────────────
 # 4. "Summary" sheet'i oluştur
@@ -285,7 +291,7 @@ for ci, (val, col_color) in enumerate(zip(totals_values, TABLE_COLORS), 1):
 for ci, w in enumerate(WIDTHS_S, 1):
     ws_sum.column_dimensions[get_column_letter(ci)].width = w
 
-print(f"✅ Summary sheet oluşturuldu — {len(page_sheets)} sayfa, {grand_total} element")
+print(t("bs_summary_created", n=len(page_sheets), total=grand_total))
 
 # ─────────────────────────────────────────────────────────────
 # 5. "Task" sheet'i oluştur
@@ -351,13 +357,13 @@ for idx, row in enumerate(task_rows):
 for ci, w in enumerate(WIDTHS_T, 1):
     wt.column_dimensions[get_column_letter(ci)].width = w
 
-print(f"✅ Task sheet oluşturuldu — {len(task_rows)} satır")
+print(t("bs_task_created", n=len(task_rows)))
 
 # ─────────────────────────────────────────────────────────────
 # 6. Kaydet (safe_save: temp → atomic rename)
 # ─────────────────────────────────────────────────────────────
 sh.safe_save(wb, EXCEL_FILE)
-print(f"\n📊 Dosya güncellendi: {EXCEL_FILE}")
-print(f"   Sheet sırası: Data → Summary → Task → {' → '.join(page_sheets)}")
-print(f"\n💡 Task sheet'indeki New Status ve AI Suggestion formülle bağlı.")
-print(f"   Developer/QA kaynak sheet'te güncellediğinde Task otomatik yansır.")
+print(t("bs_saved", file=EXCEL_FILE))
+print(t("bs_sheet_order", names=" → ".join(page_sheets)))
+print(t("bs_task_hint"))
+print(t("bs_task_hint2"))
