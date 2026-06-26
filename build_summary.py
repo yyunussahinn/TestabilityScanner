@@ -149,7 +149,7 @@ COLS_D   = ["Element ID", "Page", "Type", "Label / Text", "Value",
 WIDTHS_D = [22, 20, 16, 26, 18, 32, 14, 45]
 
 wd.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(COLS_D))
-c = wd.cell(row=1, column=1, value="Accessibility ID — Ham Veri (Tüm Sayfalar)")
+c = wd.cell(row=1, column=1, value=t("bs_data_sheet_title"))
 c.font = font(bold=True, color="FFFFFF", size=13)
 c.fill = fill("375623"); c.alignment = CENTER; c.border = BORDER
 wd.row_dimensions[1].height = 26
@@ -206,7 +206,7 @@ totals      = {s: sum(page_stats[p][s] for p in page_sheets) for s in ALL_STATUS
 grand_total = sum(totals.values())
 
 ws_sum.merge_cells(start_row=1, start_column=1, end_row=1, end_column=5)
-c = ws_sum.cell(row=1, column=1, value="Accessibility ID — Özet Rapor")
+c = ws_sum.cell(row=1, column=1, value=t("bs_summary_sheet_title"))
 c.font = font(bold=True, color="FFFFFF", size=14)
 c.fill = fill("1F3864"); c.alignment = CENTER; c.border = BORDER
 ws_sum.row_dimensions[1].height = 30
@@ -238,15 +238,15 @@ for status, (col, hdr_c, bg_c, txt_c) in METRIC_COLS.items():
 for col in range(1, 5):
     ws_sum.column_dimensions[get_column_letter(col)].width = 22
 
-TABLE_COLS   = ["Sayfa", sh.STATUS_MISSING, sh.STATUS_UNDEFINED,
-                sh.STATUS_DUPLICATE, sh.STATUS_UNIQUE, "Toplam"]
+TABLE_COLS   = [t("bs_col_page"), sh.STATUS_MISSING, sh.STATUS_UNDEFINED,
+                sh.STATUS_DUPLICATE, sh.STATUS_UNIQUE, t("bs_grand_total")]
 TABLE_COLORS = ["2C2C2A", "C00000", "C55A11", "7B3F00", "375623", "1F3864"]
 WIDTHS_S     = [24, 14, 14, 14, 14, 12]
 tbl_start    = 8
 
 ws_sum.merge_cells(start_row=tbl_start - 1, start_column=1,
                    end_row=tbl_start - 1,   end_column=len(TABLE_COLS))
-c = ws_sum.cell(row=tbl_start - 1, column=1, value="Sayfa Bazlı Dağılım")
+c = ws_sum.cell(row=tbl_start - 1, column=1, value=t("bs_page_distribution"))
 c.font = font(bold=True, color="FFFFFF", size=11)
 c.fill = fill("1F3864"); c.alignment = CENTER; c.border = BORDER
 ws_sum.row_dimensions[tbl_start - 1].height = 22
@@ -279,7 +279,7 @@ for idx, page_name in enumerate(page_sheets):
 
 total_row = tbl_start + 1 + len(page_sheets)
 ws_sum.row_dimensions[total_row].height = 20
-totals_values = ["TOPLAM", totals[sh.STATUS_MISSING], totals[sh.STATUS_UNDEFINED],
+totals_values = [t("bs_grand_total"), totals[sh.STATUS_MISSING], totals[sh.STATUS_UNDEFINED],
                  totals[sh.STATUS_DUPLICATE], totals[sh.STATUS_UNIQUE], grand_total]
 for ci, (val, col_color) in enumerate(zip(totals_values, TABLE_COLORS), 1):
     c = ws_sum.cell(row=total_row, column=ci, value=val)
@@ -308,7 +308,7 @@ WIDTHS_T = [22, 20, 16, 26, 18, 32, 14, 28, 45]
 
 wt.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(COLS_T))
 c = wt.cell(row=1, column=1,
-            value=f"ID Eklenecek Elementler — Waiting Dev  ({len(task_rows)} adet)")
+            value=t("bs_task_sheet_title", n=len(task_rows)))
 c.font = font(bold=True, color="FFFFFF", size=13)
 c.fill = fill(NEW_STATUS_COLOR["hdr"]); c.alignment = CENTER; c.border = BORDER
 wt.row_dimensions[1].height = 26

@@ -240,6 +240,13 @@
     "bs_task_hint":       "💡 Task sheet'indeki New Status ve AI Suggestion formülle bağlı.",
     "bs_task_hint2":      "   Developer/QA kaynak sheet'te güncellediğinde Task otomatik yansır.",
 
+    "bs_data_sheet_title":    "Accessibility ID — Ham Veri (Tüm Sayfalar)",
+    "bs_summary_sheet_title": "Accessibility ID — Özet Rapor",
+    "bs_task_sheet_title":    "ID Eklenecek Elementler — Waiting Dev ({n} adet)",
+    "bs_page_distribution":   "Sayfa Bazlı Dağılım",
+    "bs_grand_total":         "TOPLAM",
+    "bs_col_page":            "Sayfa",
+
     "lang_label": "Dil:"
   },
 
@@ -483,6 +490,13 @@
     "bs_sheet_order":     "   Sheet order: Data → Summary → Task → {names}",
     "bs_task_hint":       "💡 New Status and AI Suggestion in Task sheet are formula-linked.",
     "bs_task_hint2":      "   When Developer/QA updates the source sheet, Task reflects it automatically.",
+
+    "bs_data_sheet_title":    "Accessibility ID — Raw Data (All Pages)",
+    "bs_summary_sheet_title": "Accessibility ID — Summary Report",
+    "bs_task_sheet_title":    "Elements Pending ID — Waiting Dev ({n} items)",
+    "bs_page_distribution":   "Page-Based Distribution",
+    "bs_grand_total":         "TOTAL",
+    "bs_col_page":            "Page",
 
     "lang_label": "Lang:"
   }
