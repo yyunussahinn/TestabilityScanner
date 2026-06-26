@@ -1,4 +1,4 @@
-# WHERE IS MY ID — config.py  (19.06.2026 14:04)
+# WHERE IS MY ID — config.py  (26.06.2026 14:45)
 PLATFORM = "android"
 LANGUAGE = "EN"
 BLACKLIST_IDS = ["LinearLayout", "FrameLayout", "text-input-flat-label-inactive", "text-input-underline", "right-icon-adornment-container", "right-icon-adornment", "text-input-flat", "statusBarBackground", "content", "action_bar_root", "navigationBarBackground", "exo_content_frame"]
