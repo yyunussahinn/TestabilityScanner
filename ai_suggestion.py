@@ -3,7 +3,7 @@ ai_suggestion.py
 ────────────────
 Element taramasında AI Suggestion sütunu için Claude API'yi kullanır.
 """
-"test yunus"
+
 
 import json
 import re
