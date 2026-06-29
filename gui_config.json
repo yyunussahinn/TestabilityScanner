@@ -4,7 +4,7 @@
   "output_word": true,
   "output_excel": true,
   "output_json": true,
-  "output_dir": "/Users/yunus.sahin/Library/CloudStorage/OneDrive-TESTINIUMTeknolojiYazılımA.Ş/Demo/Tam Tarama",
+  "output_dir": "/Users/yunus.sahin/Library/CloudStorage/OneDrive-TESTINIUMTeknolojiYazılımA.Ş/Demo/Smart Scan",
   "appium_server": "http://127.0.0.1:4723",
   "document_sections": [
     "unique",
