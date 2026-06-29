@@ -1,3 +1,5 @@
+EN 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+---
 # WHERE IS MY ID
 
 **Mobile Accessibility ID Reporter** — v4.5
@@ -388,3 +390,398 @@ Switch between **TR** (Türkçe) and **EN** (English) using the dropdown in the 
 ---
 
 *WHERE IS MY ID — v4.5 | Mobile Accessibility Reporter*
+
+---
+
+TR 🇹🇷
+---
+# WHERE IS MY ID
+
+**Mobil Erişilebilirlik ID Raporlayıcı** — v4.5
+
+Appium aracılığıyla çalışan bir mobil uygulamaya bağlanan, tüm etkileşimli UI elementlerini toplayan, erişilebilirlik ID'lerini sınıflandıran, yapay zeka destekli isimlendirme önerileri üreten ve Word / Excel / JSON raporları oluşturan bir masaüstü aracıdır.
+
+---
+
+## İçindekiler
+
+- [Ne Yapar](#ne-yapar)
+- [Gereksinimler](#gereksinimler)
+- [Kurulum](#kurulum)
+- [Yapılandırma](#yapılandırma)
+- [API Key Kurulumu](#api-key-kurulumu)
+- [Uygulamayı Çalıştırma](#uygulamayı-çalıştırma)
+- [Tarama Modları](#tarama-modları)
+- [Çıktı Dosyaları](#çıktı-dosyaları)
+- [CLI Kullanımı](#cli-kullanımı)
+- [Proje Yapısı](#proje-yapısı)
+- [Çoklu Dil Desteği](#çoklu-dil-desteği)
+- [Bilinen Sorunlar](#bilinen-sorunlar)
+
+---
+
+## Ne Yapar
+
+WHERE IS MY ID, Appium üzerinden canlı bir mobil uygulama oturumuna bağlanır ve ekrandaki tüm etkileşimli elementleri tarar. Her element dört ID durumundan birine sınıflandırılır:
+
+| Durum | Açıklama |
+|---|---|
+| ✅ **Unique ID** | Elementin geçerli ve benzersiz bir erişilebilirlik ID'si var |
+| ⚠️ **Undefined ID** | Elementin ID'si "undefined" içeriyor veya `__` ile başlıyor |
+| 🔁 **Duplicate ID** | Aynı erişilebilirlik ID'si birden fazla element tarafından kullanılıyor |
+| ❌ **Missing ID** | Elementin hiç erişilebilirlik ID'si yok |
+
+Eksik veya geçersiz ID'ye sahip elementler için Claude yapay zekası, uygulamanın mevcut isimlendirme kurallarını takip eden snake_case önerileri üretir. Sonuçlar Word, Excel ve/veya JSON olarak dışa aktarılır.
+
+---
+
+## Gereksinimler
+
+| Bağımlılık | Sürüm | Amaç |
+|---|---|---|
+| Python | 3.10+ | Çalışma ortamı |
+| Appium Server | 2.x | Mobil cihaz köprüsü |
+| Xcode / XCUITest | güncel | iOS otomasyonu (yalnızca macOS) |
+| UiAutomator2 | güncel | Android otomasyonu |
+
+### Python Paketleri
+
+```bash
+pip install customtkinter
+pip install Appium-Python-Client
+pip install python-docx
+pip install openpyxl
+pip install Pillow
+```
+
+Hepsini tek seferde yüklemek için:
+
+```bash
+pip install customtkinter Appium-Python-Client python-docx openpyxl Pillow
+```
+
+### Appium Kurulumu
+
+```bash
+npm install -g appium
+appium driver install xcuitest      # iOS için
+appium driver install uiautomator2  # Android için
+```
+
+Tarama yapmadan önce Appium sunucusunu başlatın:
+
+```bash
+appium --port 4723
+```
+
+---
+
+## Kurulum
+
+```bash
+git clone <repo-url>
+cd where-is-my-id
+pip install customtkinter Appium-Python-Client python-docx openpyxl Pillow
+```
+
+> **macOS SSL düzeltmesi** — Claude API'ye bağlanırken SSL hatası alırsanız:
+> ```bash
+> pip install certifi
+> /Applications/Python*/Install\ Certificates.command
+> ```
+
+---
+
+## Yapılandırma
+
+Tüm ayarlar **`gui_config.json`** dosyasında saklanır ve arayüz üzerinden yönetilir. Bu dosyayı elle düzenlemenize gerek yoktur.
+
+`config.py` uygulama tarafından her tarama öncesinde otomatik oluşturulur. Doğrudan düzenlemeyin — el ile yapılan değişiklikler bir sonraki çalıştırmada üzerine yazılır.
+
+### Cihaz Profilleri
+
+Hem iOS hem Android için birden fazla cihaz profili kaydedilebilir. Her profil şu alanları saklar:
+
+**iOS profil alanları:**
+```json
+{
+  "device_name": "iPhone 16",
+  "platform_version": "18.6",
+  "bundle_id": "com.example.myapp",
+  "udid": "AD21A917-5271-4DF1-8C5D-E64A0DE8EAD9"
+}
+```
+
+**Android profil alanları:**
+```json
+{
+  "device_name": "emulator-5554",
+  "platform_version": "13",
+  "app_package": "com.example.myapp",
+  "app_activity": "com.example.myapp.MainActivity"
+}
+```
+
+### Blacklist ID'ler
+
+Göz ardı edilmesi gereken sistem tarafından üretilen resource ID'leri **Blacklist IDs** alanına virgülle ayrılmış şekilde girilebilir. Yaygın varsayılan değerler:
+
+```
+statusBarBackground, content, action_bar_root, navigationBarBackground,
+LinearLayout, FrameLayout
+```
+
+### Rapor Bölümleri
+
+Oluşturulan raporlarda hangi element kategorilerinin yer alacağını seçin. Bölümler bağımsız olarak açılıp kapatılabilir:
+
+- Unique ID
+- Undefined ID
+- Duplicate ID
+- Missing ID
+
+---
+
+## API Key Kurulumu
+
+Claude yapay zeka özellikleri (element filtreleme yedekleme ve ID öneri üretimi) bir Anthropic API anahtarı gerektirir.
+
+**Seçenek 1 — Ortam değişkeni (önerilen):**
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+**Seçenek 2 — Anahtar dosyası:**
+
+Proje kök dizininde `.anthropic_key` adında bir dosya oluşturun ve anahtarı içine yapıştırın:
+```
+sk-ant-api03-...
+```
+
+> ⚠️ Gizli bilgileri commit'lemekten kaçınmak için `.anthropic_key` ve `config.py` dosyalarını `.gitignore`'a ekleyin.
+
+API anahtarı sağlanmazsa uygulama yalnızca koordinat tabanlı element eşleştirmeye geri döner. AI öneri ve Vision fallback özellikleri devre dışı kalır.
+
+---
+
+## Uygulamayı Çalıştırma
+
+```bash
+python app.py
+```
+
+Arayüz, üstte üç sekmeyle birlikte açılır.
+
+---
+
+## Tarama Modları
+
+### 1 — Tam Tarama (📋 Full Scan)
+
+Uygulamaya bağlanır, mevcut ekranı tek seferde tarar ve hemen bir rapor oluşturur.
+
+**Adımlar:**
+1. Platform seçin (iOS / Android)
+2. Bir cihaz profili seçin veya oluşturun
+3. Çıktı klasörünü ve formatını belirleyin
+4. **▶ ÇALIŞTIR** butonuna tıklayın
+5. Konsolda sorulduğunda sayfa adını girin
+6. Raporlar çıktı klasörüne kaydedilir
+
+**Ne zaman kullanılır:** Tek bir ekranın tam anlık görüntüsünü almak istediğinizde.
+
+---
+
+### 2 — Akıllı Tarama (🎯 Smart Scan)
+
+Önce ekran görüntüsü alır, ilgilenilen alanlara annotation kutuları çizmenizi sağlar, ardından element taramasını yalnızca bu alanlarla sınırlandırır.
+
+**Adımlar:**
+1. Platform ve profili yapılandırın
+2. **📱 BAĞLAN & GÖRÜNTÜ AL** butonuna tıklayın
+3. Açılan annotation penceresinde dahil edilecek elementlerin etrafına dikdörtgen çizin
+4. **✓ Onayla → Raporu Oluştur** butonuna tıklayın
+5. Beliren panelde sayfa adını girin
+
+**Eşleştirme nasıl çalışır:**
+- Merkez koordinatları çizilen bir kutunun içine düşen elementler doğrudan dahil edilir
+- Koordinat eşleşmesi bulunamayan kutular için Claude Vision API'si devreye girerek elementleri görsel olarak tanımlar
+
+**Ne zaman kullanılır:** Ekranda çok fazla element olduğunda ve yalnızca belirli bir bölümü raporlamak istediğinizde.
+
+---
+
+### 3 — Oturum/Akış Tarama (📱 Session Scan)
+
+Appium sürücüsünü birden fazla sayfa koleksiyonu boyunca açık tutar. Taramalar tek bir çok sayfalı raporda birikir.
+
+**Adımlar:**
+1. Bir **akış adı** girin (örn. `giris_akisi`, `odeme`)
+2. **🔌 OTURUMU BAŞLAT** butonuna tıklayın
+3. Uygulamada ilk sayfaya gidin
+4. **📥 SAYFAYI TOPLA** butonuna tıklayın — her sayfa için tekrarlayın
+5. Bitince **✅ BİTTİ - RAPOR OLUŞTUR** butonuna tıklayın
+
+Sağ paneldeki özet tablo, toplanan her sayfa için element sayılarını gerçek zamanlı olarak gösterir.
+
+**Ne zaman kullanılır:** Çok sayfalı bir kullanıcı akışında raporlama yaparken (örn. onboarding, ödeme süreci).
+
+---
+
+### Build Summary (📊 Sheet Birleştir)
+
+Mevcut bir Excel rapor dosyasını okur ve üç ek sheet oluşturur:
+
+| Sheet | İçerik |
+|---|---|
+| **Data** | Her sayfa sheet'inden tüm elementlerin düz listesi |
+| **Summary** | Durum sayıları ve yüzdeleriyle sayfa bazlı dağılım |
+| **Task** | Yalnızca `Missing / Undefined / Duplicate` durumundaki elementler; kaynak sheet'lere formülle bağlı |
+
+Çalıştırmak için: footer'daki dosya seçiciyle bir Excel dosyası seçin, ardından **📊 Sheet Birleştir** butonuna tıklayın.
+
+---
+
+## Çıktı Dosyaları
+
+### Word Belgesi (`.docx`)
+
+Her taranan elementi şu sütunlarla listeleyen bir tablo içerir:
+
+`Element ID | Sayfa | Tip | Etiket / Metin | Değer | Erişilebilirlik ID / Resource ID | Durum | Yeni Durum | AI Önerisi`
+
+Belgenin sonunda ekran görüntüsü yer alır.
+
+### Excel Çalışma Kitabı (`.xlsx`)
+
+Word ile aynı sütunlar, duruma göre renk kodlamalı. Her sayfa adı ayrı bir sheet'e dönüşür. Ekran görüntüleri ayrı bir görsel sütununa gömülür. Data, Summary ve Task görünümlerini eklemek için ardından **Sheet Birleştir**'i çalıştırın.
+
+### JSON (`.json`)
+
+Yalnızca AI önerisi başarıyla oluşturulmuş `Unique ID` elementlerini içerir:
+
+```json
+[
+  {
+    "key": "loginEmailTextbox",
+    "androidValue": "login_email_input",
+    "androidType": "id",
+    "iosValue": "login_email_input",
+    "iosType": "accessibilityId"
+  }
+]
+```
+
+---
+
+## CLI Kullanımı
+
+### Arayüz olmadan tarama çalıştırma
+
+```bash
+# Android
+python element_checker_android.py
+
+# iOS
+python element_checker_ios.py
+```
+
+Her iki script de `config.py`'yi okur (arayüz tarafından otomatik oluşturulur). Bağımsız çalıştırılıyorsa, çalıştırmadan önce `config.py`'nin doğru cihaz profilini yansıttığından emin olun.
+
+### Komut satırından Build Summary çalıştırma
+
+```bash
+python build_summary.py /path/to/Elements_Report_Android.xlsx
+
+# veya ortam değişkeni ile
+WIMID_EXCEL_FILE=/path/to/report.xlsx python build_summary.py
+```
+
+---
+
+## Proje Yapısı
+
+```
+/
+├── app.py                       ← GUI giriş noktası (CustomTkinter)
+├── smart_tab.py                 ← Akıllı Tarama sekme mantığı
+├── session_tab.py               ← Oturum Tarama sekme mantığı
+├── annotator.py                 ← Ekran görüntüsü annotation penceresi (Tkinter)
+│
+├── smart_checker.py             ← Appium bağlantısı, element toplama, rapor üretimi
+├── claude_filter.py             ← Koordinat + Vision tabanlı element filtreleme (Claude API)
+├── ai_suggestion.py             ← AI destekli ID öneri üreticisi (Claude API)
+├── shared.py                    ← Durum sabitleri, renk paleti, Word/Excel/JSON üreticileri
+│
+├── element_checker_android.py   ← Bağımsız Android tarama scripti
+├── element_checker_ios.py       ← Bağımsız iOS tarama scripti
+├── build_summary.py             ← Excel sheet birleştirici / özet üretici
+│
+├── i18n.py                      ← Dil yönetim modülü
+├── strings.json                 ← TR ve EN için arayüz metinleri
+│
+├── config.py                    ← ⚠️ Otomatik oluşturulur — elle düzenlemeyin
+├── gui_config.json              ← Kalıcı arayüz ayarları ve cihaz profilleri
+└── .anthropic_key               ← ⚠️ Git'te takip edilmez — API key dosyası
+```
+
+### Temel Modül Sorumlulukları
+
+| Dosya | Sorumluluk |
+|---|---|
+| `app.py` | Pencere düzeni, sekme değiştirme, subprocess yönetimi, dil değiştirme |
+| `smart_checker.py` | Appium sürücü yaşam döngüsü, iOS/Android element toplama, rapor dağıtımı |
+| `shared.py` | Durum sabitleri, Excel/Word/JSON çıktı üretimi, AI zenginleştirme sarmalayıcısı |
+| `claude_filter.py` | Element listesini annotation kutularıyla filtreler; Vision API yedeklemesi |
+| `ai_suggestion.py` | Claude üzerinden snake_case ID önerileri ve JSON key tanımları üretir |
+| `i18n.py` | `t(key)` arama, `set_lang()`, canlı dil değiştirme için listener kaydı |
+| `build_summary.py` | Mevcut Excel dosyalarına Data, Summary, Task sheet'leri ekleyen post-processing scripti |
+
+---
+
+## Çoklu Dil Desteği
+
+Uygulama Türkçe (TR) ve İngilizce (EN) dillerini destekler. Dil, sağ üst köşedeki açılır menüden çalışma zamanında değiştirilebilir — yeniden başlatma gerekmez.
+
+Tüm kullanıcıya gösterilen metinler `strings.json` dosyasında tanımlanmıştır. Metin eklemek veya güncellemek için:
+
+1. Anahtarı `strings.json` içinde hem `"TR"` hem de `"EN"` bölümüne ekleyin
+2. Kodda `t("anahtar_adi")` veya `t("anahtar_adi", param=deger)` ile kullanın
+
+**Kod değişiklikleriyle eklenen yeni anahtarlar için kural:**
+
+```json
+"TR": {
+  "yeni_anahtar": "Türkçe metin {param}",
+  ...
+},
+"EN": {
+  "yeni_anahtar": "English text {param}",
+  ...
+}
+```
+
+Bir anahtar her iki dilde de yoksa `t()` anahtarın kendisini sessiz fallback olarak döndürür — bu arayüzde görünür olur ve hata olarak değerlendirilmelidir.
+
+---
+
+## Bilinen Sorunlar
+
+| # | Sorun | Konum | Geçici Çözüm |
+|---|---|---|---|
+| 1 | `config.py` otomatik oluşturulur ve commit edilmemelidir | `config.py` | `.gitignore`'a ekleyin |
+| 2 | `ai_suggestion.py` içinde SSL doğrulaması devre dışı | `ai_suggestion.py` | macOS'ta `Install Certificates.command` çalıştırın; `_SSL_CTX` override'ını kaldırın |
+| 3 | Durum string literal'leri `shared.py`, `smart_checker.py`, `ai_suggestion.py`, `session_tab.py` genelinde çoğaltılmış | Birden fazla dosya | `shared.STATUS_*` sabitlerini tutarlı şekilde kullanın |
+| 4 | `build_summary.py` varsayılan olarak hardcoded bir geliştirici dosya yolu içeriyor | `build_summary.py` | Dosya yolunu her zaman argüman veya `WIMID_EXCEL_FILE` ile belirtin |
+| 5 | `build_summary.py` Excel çıktısı seçili dil ne olursa olsun hardcoded Türkçe string kullanıyor | `build_summary.py` | `bs_*` key'leri için i18n geçişi beklemede |
+| 6 | Annotation penceresi (annotator.py) ana pencere CustomTkinter kullanırken saf Tkinter kullanıyor | `annotator.py` | macOS'ta küçük görsel tutarsızlık |
+
+---
+
+## Dil
+
+Uygulama penceresinin sağ üst köşesindeki açılır menüden **TR** (Türkçe) ve **EN** (İngilizce) arasında geçiş yapabilirsiniz. Değişiklik yeniden başlatmaya gerek kalmadan tüm etiketler, butonlar, log mesajları ve diyaloglara anında yansır.
+
+---
+
+*WHERE IS MY ID — v4.5 | Mobil Erişilebilirlik Raporlayıcı*
