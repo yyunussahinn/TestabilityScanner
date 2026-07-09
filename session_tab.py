@@ -8,6 +8,9 @@ v1.2 değişiklikleri:
   - Aynı flow adıyla tekrar çalıştırıldığında Excel / Word / JSON
     tutarlı biçimde "oturum N" suffix'i alır (strings.json: session_run_label).
   - JSON dosya adından tarih-saat damgası kaldırıldı.
+  - Hardcoded "Unique ID" / "Undefined ID" / "Duplicate ID" / "Missing ID"
+    string literal'leri kaldırıldı — artık constants.py'deki STATUS_* ve
+    STATUS_ORDER sabitleri kullanılıyor.
 """
 
 import threading
@@ -15,6 +18,10 @@ import os
 from datetime import datetime
 from collections import Counter
 from i18n import t
+from constants import (
+    STATUS_UNIQUE, STATUS_UNDEFINED, STATUS_DUPLICATE, STATUS_MISSING,
+    STATUS_ORDER,
+)
 
 
 class SessionTab:
@@ -217,10 +224,10 @@ class SessionTab:
             summary = {
                 "label":     scan_label,
                 "flow":      self._flow_name,
-                "unique":    counts["Unique ID"],
-                "undefined": counts["Undefined ID"],
-                "duplicate": counts["Duplicate ID"],
-                "missing":   counts["Missing ID"],
+                "unique":    counts[STATUS_UNIQUE],
+                "undefined": counts[STATUS_UNDEFINED],
+                "duplicate": counts[STATUS_DUPLICATE],
+                "missing":   counts[STATUS_MISSING],
                 "total":     len(elements),
                 "ss_path":   ss_path,
             }
@@ -353,13 +360,6 @@ class SessionTab:
 
             self._log(t("session_log_sheet_name", name=sheet_name), "dim")
 
-            STATUS_ORDER = {
-                "Unique ID":    0,
-                "Undefined ID": 1,
-                "Duplicate ID": 2,
-                "Missing ID":   3,
-            }
-
             # ── Excel ─────────────────────────────────────────────────────────
             if "excel" in fmt_parts:
                 first_scan = True
@@ -473,10 +473,10 @@ class SessionTab:
 
         for idx, elem in enumerate(ordered):
             elem_id    = f"{sheet_name}_element_{data_rows_so_far + idx + 1}"
-            status     = elem.get("status", "Missing ID")
+            status     = elem.get("status", STATUS_MISSING)
             new_status = shr.get_new_status(status)
             row_num    = last_row + idx
-            pal        = shr.STATUS_PALETTE.get(status, shr.STATUS_PALETTE["Missing ID"])
+            pal        = shr.STATUS_PALETTE.get(status, shr.STATUS_PALETTE[STATUS_MISSING])
             r_fill     = shr.fill(pal["row"] if idx % 2 == 0 else pal["alt"])
             ns_fill    = shr.fill(shr.NEW_STATUS_COLOR["row"] if idx % 2 == 0
                                   else shr.NEW_STATUS_COLOR["alt"])
