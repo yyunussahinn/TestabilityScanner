@@ -2,6 +2,11 @@
 shared.py — Where is My Id  (i18n)
 ────────────────────────────────────────────────────────────────
 Ortak sabitler, renk paleti, stil yardımcıları ve çıktı üreticileri.
+
+NOT: STATUS_* sabitleri artık burada tanımlanmıyor — tek doğruluk
+kaynağı constants.py. Geriye dönük uyumluluk için aynı isimlerle
+buradan da erişilebilir (sh.STATUS_UNIQUE, sh.get_new_status(...) vb.
+kullanan tüm çağıran kodlar değişiklik gerektirmeden çalışmaya devam eder).
 """
 
 import json as _json
@@ -16,26 +21,10 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from i18n import t
-
-# ── Status sabitleri ──────────────────────────────────────────────────────────
-STATUS_UNIQUE    = "Unique ID"
-STATUS_DUPLICATE = "Duplicate ID"
-STATUS_MISSING   = "Missing ID"
-STATUS_UNDEFINED = "Undefined ID"
-ALL_STATUSES     = [STATUS_MISSING, STATUS_UNDEFINED, STATUS_DUPLICATE, STATUS_UNIQUE]
-
-NS_WAITING = "ID Must Be Added (Waiting Dev)"
-
-SECTION_TO_STATUS: dict[str, str] = {
-    "missing":   STATUS_MISSING,
-    "undefined": STATUS_UNDEFINED,
-    "duplicate": STATUS_DUPLICATE,
-    "unique":    STATUS_UNIQUE,
-}
-
-def get_new_status(status: str) -> str:
-    return "" if status == STATUS_UNIQUE else NS_WAITING
-
+from constants import (
+    STATUS_UNIQUE, STATUS_DUPLICATE, STATUS_MISSING, STATUS_UNDEFINED,
+    NS_WAITING, ALL_STATUSES, SECTION_TO_STATUS, get_new_status,
+)
 
 # ── Renk paleti ───────────────────────────────────────────────────────────────
 STATUS_PALETTE: dict[str, dict] = {

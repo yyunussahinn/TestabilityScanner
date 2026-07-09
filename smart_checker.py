@@ -2,6 +2,9 @@
 smart_checker.py — v4.4  (i18n)
 ────────────────────────────────────────────────────────────────
 Tüm log ve hata mesajları i18n.t() üzerinden yönetilir.
+
+NOT: STATUS_* sabitleri ve get_new_status() artık burada tanımlanmıyor —
+tek doğruluk kaynağı constants.py.
 """
 
 import config as cfg
@@ -12,6 +15,10 @@ import os
 from datetime import datetime
 from collections import Counter
 from i18n import t
+from constants import (
+    STATUS_UNIQUE, STATUS_DUPLICATE, STATUS_MISSING, STATUS_UNDEFINED,
+    get_new_status,
+)
 
 IOS_ALWAYS = [
     "XCUIElementTypeTextField",
@@ -37,15 +44,6 @@ AND_CONDITIONAL = [
     "android.widget.ImageView",
 ]
 AND_RESOURCE_ONLY = ["android.widget.TextView"]
-
-STATUS_UNIQUE    = "Unique ID"
-STATUS_DUPLICATE = "Duplicate ID"
-STATUS_MISSING   = "Missing ID"
-STATUS_UNDEFINED = "Undefined ID"
-
-
-def get_new_status(status: str) -> str:
-    return "" if status == STATUS_UNIQUE else "ID Must Be Added (Waiting Dev)"
 
 
 # ════════════════════════════════════════════════════════════════════════════

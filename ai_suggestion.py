@@ -11,6 +11,7 @@ import ssl
 import urllib.request
 import urllib.error
 from i18n import t
+from constants import STATUS_UNIQUE, STATUS_DUPLICATE, STATUS_MISSING, STATUS_UNDEFINED
 
 # ══════════════════════════════════════════════════════
 # ▼▼▼  API KEY BURAYA  ▼▼▼
@@ -164,13 +165,6 @@ def generate_id_suggestion(element: dict, existing_ids: list[str]) -> str:
 def _to_snake(text: str) -> str:
     words = re.sub(r"[^a-zA-Z0-9]+", " ", text).strip().split()
     return "_".join(w.lower() for w in words) or "element"
-
-
-# shared.py ile senkron — import döngüsünden kaçınmak için burada sabit
-STATUS_UNIQUE    = "Unique ID"
-STATUS_DUPLICATE = "Duplicate ID"
-STATUS_MISSING   = "Missing ID"
-STATUS_UNDEFINED = "Undefined ID"
 
 
 def enrich_elements(elements: list[dict], platform: str) -> list[dict]:
