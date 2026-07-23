@@ -1,5 +1,5 @@
 """
-element_checker_android.py — Where is My Id
+element_checker_android.py — Testability Scanner
 ────────────────────────────────────────────
 Android UiAutomator2 element tarama + Word/Excel/JSON çıktı üretimi.
 Ortak sabitler ve çıktı fonksiyonları: shared.py

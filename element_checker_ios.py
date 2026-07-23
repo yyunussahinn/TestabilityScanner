@@ -1,5 +1,5 @@
 """
-element_checker_ios.py — Where is My Id
+element_checker_ios.py — Testability Scanner
 ────────────────────────────────────────
 iOS XCUITest element tarama + Word/Excel/JSON çıktı üretimi.
 Ortak sabitler ve çıktı fonksiyonları: shared.py

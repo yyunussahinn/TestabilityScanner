@@ -1,5 +1,5 @@
 """
-i18n.py — Where is My Id
+i18n.py — Testability Scanner
 ────────────────────────────────────────────────────────────────
 Dil yönetim modülü.
 

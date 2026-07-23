@@ -1,5 +1,5 @@
 """
-Where is My Id — GUI  v4.5
+Testability Scanner — GUI  v4.5
 ──────────────────────────────────────────────────────────────
 v4.5 değişiklikleri:
   - Üzerine yazma (overwrite) onay akışı kaldırıldı.
@@ -137,7 +137,7 @@ def write_config_py(cfg, path):
     out_fmt = _build_output_format(cfg)
     lang    = cfg.get("language", "EN")
     txt = (
-        f'# WHERE IS MY ID — config.py  ({datetime.now():%d.%m.%Y %H:%M})\n'
+        f'# Testability Scanner — config.py  ({datetime.now():%d.%m.%Y %H:%M})\n'
         f'PLATFORM = "{platform}"\nLANGUAGE = "{lang}"\nBLACKLIST_IDS = {bl}\n'
         f'OUTPUT_FORMAT = "{out_fmt}"\nDOCUMENT_SECTIONS = {sec}\n'
         f'OUTPUT_DIR = "{od}"\nAPPIUM_SERVER = "{cfg["appium_server"]}"\n{plat}'
