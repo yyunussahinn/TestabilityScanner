@@ -1,5 +1,5 @@
 """
-shared.py — Where is My Id  (i18n)
+shared.py — Testability Scanner  (i18n)
 ────────────────────────────────────────────────────────────────
 Ortak sabitler, renk paleti, stil yardımcıları ve çıktı üreticileri.
 

@@ -1,5 +1,5 @@
 """
-constants.py — Where is My Id
+constants.py — Testability Scanner
 ────────────────────────────────────────────────────────────────
 Merkezi durum (status) sabitleri.
 

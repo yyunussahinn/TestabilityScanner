@@ -1,5 +1,5 @@
 """
-session_tab.py — Where is My Id  v1.2  (i18n)
+session_tab.py — Testability Scanner  v1.2  (i18n)
 ────────────────────────────────────────────────────────────────
 Multi-page session tarama mantığı.
 Tüm log ve hata mesajları i18n.t() üzerinden yönetilir.

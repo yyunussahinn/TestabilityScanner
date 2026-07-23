@@ -1,5 +1,5 @@
 """
-build_summary.py — Where is My Id
+build_summary.py — Testability Scanner
 ────────────────────────────────────────────────────────────────────────────
 Excel dosyasındaki tüm sayfa sheet'lerini birleştirerek:
   • "Data"    → ham verinin tamamı (pivot için)
@@ -78,7 +78,7 @@ def font(bold=False, color="000000", size=10): return Font(bold=bold, color=colo
 # 1. Dosyayı aç
 # ─────────────────────────────────────────────────────────────
 if not os.path.exists(EXCEL_FILE):
-    raise FileNotFoundError(f"Dosya bulunamadı: {EXCEL_FILE}")
+    raise FileNotFoundError(t("bs_file_not_found", file=EXCEL_FILE))
 
 wb = openpyxl.load_workbook(EXCEL_FILE)
 
