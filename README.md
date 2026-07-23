@@ -1,6 +1,6 @@
 EN 🏴󠁧󠁢󠁥󠁮󠁧󠁿
 ---
-# WHERE IS MY ID
+# Testability Scanner
 
 **Mobile Accessibility ID Reporter** — v4.5
 
@@ -27,7 +27,7 @@ A desktop tool that connects to a running mobile application via Appium, collect
 
 ## What It Does
 
-WHERE IS MY ID connects to a live mobile application session through Appium and scans every interactive element on the current screen. Each element is classified into one of four ID statuses:
+Testability Scanner connects to a live mobile application session through Appium and scans every interactive element on the current screen. Each element is classified into one of four ID statuses:
 
 | Status | Meaning |
 |---|---|
@@ -389,13 +389,13 @@ Switch between **TR** (Türkçe) and **EN** (English) using the dropdown in the 
 
 ---
 
-*WHERE IS MY ID — v4.5 | Mobile Accessibility Reporter*
+*Testability Scanner — v4.5 | Mobile Accessibility Reporter*
 
 ---
 
 TR 🇹🇷
 ---
-# WHERE IS MY ID
+# Testability Scanner
 
 **Mobil Erişilebilirlik ID Raporlayıcı** — v4.5
 
@@ -422,7 +422,7 @@ Appium aracılığıyla çalışan bir mobil uygulamaya bağlanan, tüm etkileş
 
 ## Ne Yapar
 
-WHERE IS MY ID, Appium üzerinden canlı bir mobil uygulama oturumuna bağlanır ve ekrandaki tüm etkileşimli elementleri tarar. Her element dört ID durumundan birine sınıflandırılır:
+Testability Scanner, Appium üzerinden canlı bir mobil uygulama oturumuna bağlanır ve ekrandaki tüm etkileşimli elementleri tarar. Her element dört ID durumundan birine sınıflandırılır:
 
 | Durum | Açıklama |
 |---|---|
@@ -784,4 +784,4 @@ Uygulama penceresinin sağ üst köşesindeki açılır menüden **TR** (Türkç
 
 ---
 
-*WHERE IS MY ID — v4.5 | Mobil Erişilebilirlik Raporlayıcı*
+*Testability Scanner — v4.5 | Mobil Erişilebilirlik Raporlayıcı*
