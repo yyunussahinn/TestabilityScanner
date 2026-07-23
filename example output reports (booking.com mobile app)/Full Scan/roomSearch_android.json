@@ -1,0 +1,23 @@
+[
+  {
+    "key": "facetWithBuiBookingHeaderToolbarContainer",
+    "androidValue": "facet_with_bui_booking_header_toolbar",
+    "androidType": "id",
+    "iosValue": "facet_with_bui_booking_header_toolbar",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "bubbleLabel",
+    "androidValue": "bubble",
+    "androidType": "id",
+    "iosValue": "bubble",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "navigationBarItemLargeLabelViewLabel",
+    "androidValue": "navigation_bar_item_large_label_view",
+    "androidType": "id",
+    "iosValue": "navigation_bar_item_large_label_view",
+    "iosType": "accessibilityId"
+  }
+]

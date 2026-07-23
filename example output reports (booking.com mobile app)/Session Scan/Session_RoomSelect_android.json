@@ -1,0 +1,135 @@
+[
+  {
+    "key": "facetWithBuiBookingHeaderToolbarContainer",
+    "androidValue": "facet_with_bui_booking_header_toolbar",
+    "androidType": "id",
+    "iosValue": "facet_with_bui_booking_header_toolbar",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "bubbleLabel",
+    "androidValue": "bubble",
+    "androidType": "id",
+    "iosValue": "bubble",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "navigationBarItemLargeLabelViewLabel",
+    "androidValue": "navigation_bar_item_large_label_view",
+    "androidType": "id",
+    "iosValue": "navigation_bar_item_large_label_view",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "srListContainer",
+    "androidValue": "sr_list",
+    "androidType": "id",
+    "iosValue": "sr_list",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "srActivityRootContainer",
+    "androidValue": "sr_activity_root",
+    "androidType": "id",
+    "iosValue": "sr_activity_root",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "srToolbarContainer",
+    "androidValue": "sr_toolbar",
+    "androidType": "id",
+    "iosValue": "sr_toolbar",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "searchboxDestinationLabel",
+    "androidValue": "searchbox_destination",
+    "androidType": "id",
+    "iosValue": "searchbox_destination",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "searchboxSeparatorLabel",
+    "androidValue": "searchbox_separator",
+    "androidType": "id",
+    "iosValue": "searchbox_separator",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "searchboxDatesLabel",
+    "androidValue": "searchbox_dates",
+    "androidType": "id",
+    "iosValue": "searchbox_dates",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "selectRoomCtaBtn",
+    "androidValue": "select_room_cta",
+    "androidType": "id",
+    "iosValue": "select_room_cta",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "facetWithBuiBookingHeaderToolbarContainer",
+    "androidValue": "facet_with_bui_booking_header_toolbar",
+    "androidType": "id",
+    "iosValue": "facet_with_bui_booking_header_toolbar",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "facetWithBuiBookingHeaderContentContainer",
+    "androidValue": "facet_with_bui_booking_header_content",
+    "androidType": "id",
+    "iosValue": "facet_with_bui_booking_header_content",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "propertyReviewScoreContainer",
+    "androidValue": "property_review_score",
+    "androidType": "id",
+    "iosValue": "property_review_score",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "propertyNameLabel",
+    "androidValue": "property_name",
+    "androidType": "id",
+    "iosValue": "property_name",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "buiReviewScoreViewLabel",
+    "androidValue": "bui_review_score_view",
+    "androidType": "id",
+    "iosValue": "bui_review_score_view",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "menuShareHotelBtn",
+    "androidValue": "menu_share_hotel",
+    "androidType": "id",
+    "iosValue": "menu_share_hotel",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "decorContentParentContainer",
+    "androidValue": "decor_content_parent",
+    "androidType": "id",
+    "iosValue": "decor_content_parent",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "actionBarContainer",
+    "androidValue": "action_bar",
+    "androidType": "id",
+    "iosValue": "action_bar",
+    "iosType": "accessibilityId"
+  },
+  {
+    "key": "roomListRootContainer",
+    "androidValue": "room_list_root",
+    "androidType": "id",
+    "iosValue": "room_list_root",
+    "iosType": "accessibilityId"
+  }
+]
