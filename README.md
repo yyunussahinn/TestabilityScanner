@@ -84,8 +84,9 @@ appium --port 4723
 ## Installation
 
 ```bash
-git clone <repo-url>
-cd where-is-my-id
+git clone https://github.com/yyunussahinn/testability-scanner.git
+cd testability-scanner
+
 pip install customtkinter Appium-Python-Client python-docx openpyxl Pillow
 ```
 
@@ -370,19 +371,6 @@ If a key exists in neither language, `t()` returns the key name itself as a sile
 
 ---
 
-## Known Issues
-
-| # | Issue | Location | Workaround |
-|---|---|---|---|
-| 1 | `config.py` is auto-generated and should not be committed | `config.py` | Add to `.gitignore` |
-| 2 | SSL verification is disabled in `ai_suggestion.py` | `ai_suggestion.py` | Run `Install Certificates.command` on macOS; remove `_SSL_CTX` override |
-| 3 | Status string literals duplicated across `shared.py`, `smart_checker.py`, `ai_suggestion.py`, `session_tab.py` | Multiple files | Use `shared.STATUS_*` constants consistently |
-| 4 | `build_summary.py` contains a hardcoded developer file path as default | `build_summary.py` | Always pass the file path as an argument or via `WIMID_EXCEL_FILE` |
-| 5 | `build_summary.py` Excel output uses hardcoded Turkish strings regardless of selected language | `build_summary.py` | Pending i18n migration for `bs_*` keys |
-| 6 | Annotation window (annotator.py) uses plain Tkinter while the main window uses CustomTkinter | `annotator.py` | Minor visual inconsistency on macOS |
-
----
-
 ## Language
 
 Switch between **TR** (Türkçe) and **EN** (English) using the dropdown in the top-right corner of the application window. The change takes effect immediately across all labels, buttons, log messages, and dialogs without restarting.
@@ -390,6 +378,24 @@ Switch between **TR** (Türkçe) and **EN** (English) using the dropdown in the 
 ---
 
 *Testability Scanner — v4.5 | Mobile Accessibility Reporter*
+
+---
+
+## 📜 License
+
+**Proprietary Software — All Rights Reserved**
+
+© 2026 **Testinium A.Ş.** All rights reserved.
+
+This software and its source code are the proprietary property of **Testinium A.Ş.** No part of this repository may be copied, modified, distributed, sublicensed, or used — in whole or in part — without prior written permission from **Testinium A.Ş.**
+
+This project was developed as an internal R&D deliverable. Unauthorized use, reproduction, or redistribution is strictly prohibited.
+
+---
+## 👤 Author
+
+**Yunus Şahin**
+GitHub: [@yyunussahinn](https://github.com/yyunussahinn)
 
 ---
 
@@ -479,8 +485,9 @@ appium --port 4723
 ## Kurulum
 
 ```bash
-git clone <repo-url>
-cd where-is-my-id
+git clone https://github.com/yyunussahinn/testability-scanner.git
+cd testability-scanner
+
 pip install customtkinter Appium-Python-Client python-docx openpyxl Pillow
 ```
 
@@ -765,19 +772,6 @@ Bir anahtar her iki dilde de yoksa `t()` anahtarın kendisini sessiz fallback ol
 
 ---
 
-## Bilinen Sorunlar
-
-| # | Sorun | Konum | Geçici Çözüm |
-|---|---|---|---|
-| 1 | `config.py` otomatik oluşturulur ve commit edilmemelidir | `config.py` | `.gitignore`'a ekleyin |
-| 2 | `ai_suggestion.py` içinde SSL doğrulaması devre dışı | `ai_suggestion.py` | macOS'ta `Install Certificates.command` çalıştırın; `_SSL_CTX` override'ını kaldırın |
-| 3 | Durum string literal'leri `shared.py`, `smart_checker.py`, `ai_suggestion.py`, `session_tab.py` genelinde çoğaltılmış | Birden fazla dosya | `shared.STATUS_*` sabitlerini tutarlı şekilde kullanın |
-| 4 | `build_summary.py` varsayılan olarak hardcoded bir geliştirici dosya yolu içeriyor | `build_summary.py` | Dosya yolunu her zaman argüman veya `WIMID_EXCEL_FILE` ile belirtin |
-| 5 | `build_summary.py` Excel çıktısı seçili dil ne olursa olsun hardcoded Türkçe string kullanıyor | `build_summary.py` | `bs_*` key'leri için i18n geçişi beklemede |
-| 6 | Annotation penceresi (annotator.py) ana pencere CustomTkinter kullanırken saf Tkinter kullanıyor | `annotator.py` | macOS'ta küçük görsel tutarsızlık |
-
----
-
 ## Dil
 
 Uygulama penceresinin sağ üst köşesindeki açılır menüden **TR** (Türkçe) ve **EN** (İngilizce) arasında geçiş yapabilirsiniz. Değişiklik yeniden başlatmaya gerek kalmadan tüm etiketler, butonlar, log mesajları ve diyaloglara anında yansır.
@@ -785,3 +779,24 @@ Uygulama penceresinin sağ üst köşesindeki açılır menüden **TR** (Türkç
 ---
 
 *Testability Scanner — v4.5 | Mobil Erişilebilirlik Raporlayıcı*
+
+---
+
+## 📜 Lisans
+
+**Özel Mülkiyetli Yazılım (Proprietary) — Tüm Hakları Saklıdır**
+
+© 2026 **Testinium A.Ş.** Tüm hakları saklıdır.
+
+Bu yazılım ve kaynak kodu **Testinium A.Ş.**'nin özel mülkiyetindedir. Bu repodaki hiçbir içerik, **Testinium A.Ş.**'inden önceden yazılı izin alınmaksızın kısmen veya tamamen kopyalanamaz, değiştirilemez, dağıtılamaz, alt lisanslanamaz veya kullanılamaz.
+
+Bu proje, dahili bir Ar-Ge çıktısı olarak geliştirilmiştir. İzinsiz kullanım, çoğaltma veya yeniden dağıtım kesinlikle yasaktır.
+
+---
+
+## 👤 Geliştirici
+
+**Yunus Şahin**
+GitHub: [@yyunussahinn](https://github.com/yyunussahinn)
+
+---
