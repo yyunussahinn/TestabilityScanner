@@ -11,6 +11,7 @@ A desktop tool that connects to a running mobile application via Appium, collect
 ## Table of Contents
 
 - [What It Does](#what-it-does)
+- [Features](#-features)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -37,6 +38,20 @@ Testability Scanner connects to a live mobile application session through Appium
 | ❌ **Missing ID** | Element has no accessibility ID at all |
 
 For elements that are missing or have invalid IDs, Claude AI generates a suggested snake_case name following the app's existing naming conventions. Results are exported to Word, Excel, and/or JSON.
+
+---
+
+## ✨ Features
+
+- 📱 **Two platforms** — iOS (XCUITest) and Android (UiAutomator2) scanning out of the box
+- 🎯 **Three scan modes** — Full Scan, Smart (annotation-based) Scan, and multi-page Session Scan
+- 🤖 **AI-powered naming** — Claude suggests consistent, convention-aware accessibility IDs for problematic elements
+- 🖼️ **Vision fallback** — Claude Vision resolves elements that annotation boxes couldn't match by coordinates
+- 📊 **Multi-format reports** — Word, Excel (with embedded screenshots), and JSON, generated together or independently
+- 🧩 **Excel merge tool** — Combine multiple page/session sheets into unified Data / Summary / Task views
+- 🌍 **Live language switching** — Full TR/EN interface switch at runtime, no restart required
+- 👥 **Device profile management** — Save and switch between multiple iOS/Android device configurations
+- 🚫 **Blacklist support** — Filter out known noisy system-generated resource IDs
 
 ---
 
@@ -377,10 +392,6 @@ Switch between **TR** (Türkçe) and **EN** (English) using the dropdown in the 
 
 ---
 
-*Testability Scanner — v4.5 | Mobile Accessibility Reporter*
-
----
-
 ## 📜 License
 
 **Proprietary Software — All Rights Reserved**
@@ -399,6 +410,10 @@ GitHub: [@yyunussahinn](https://github.com/yyunussahinn)
 
 ---
 
+*Testability Scanner — v4.5 | Mobile Accessibility Reporter*
+
+---
+
 TR 🇹🇷
 ---
 # Testability Scanner
@@ -412,6 +427,7 @@ Appium aracılığıyla çalışan bir mobil uygulamaya bağlanan, tüm etkileş
 ## İçindekiler
 
 - [Ne Yapar](#ne-yapar)
+- [Özellikler](#-özellikler)
 - [Gereksinimler](#gereksinimler)
 - [Kurulum](#kurulum)
 - [Yapılandırma](#yapılandırma)
@@ -438,6 +454,20 @@ Testability Scanner, Appium üzerinden canlı bir mobil uygulama oturumuna bağl
 | ❌ **Missing ID** | Elementin hiç erişilebilirlik ID'si yok |
 
 Eksik veya geçersiz ID'ye sahip elementler için Claude yapay zekası, uygulamanın mevcut isimlendirme kurallarını takip eden snake_case önerileri üretir. Sonuçlar Word, Excel ve/veya JSON olarak dışa aktarılır.
+
+---
+
+## ✨ Özellikler
+
+- 📱 **İki platform** — iOS (XCUITest) ve Android (UiAutomator2) taraması kutudan çıktığı gibi hazır
+- 🎯 **Üç tarama modu** — Tam Tarama, annotation tabanlı Akıllı Tarama ve çok sayfalı Oturum Tarama
+- 🤖 **Yapay zeka destekli isimlendirme** — Claude, sorunlu elementler için tutarlı ve kurala uygun erişilebilirlik ID'leri önerir
+- 🖼️ **Vision yedekleme** — Annotation kutularının koordinatla eşleştiremediği elementleri Claude Vision görsel olarak çözer
+- 📊 **Çoklu format raporlar** — Word, Excel (gömülü ekran görüntüleriyle) ve JSON; birlikte veya bağımsız üretilebilir
+- 🧩 **Excel birleştirme aracı** — Birden fazla sayfa/oturum sheet'ini tek bir Data / Summary / Task görünümünde birleştirir
+- 🌍 **Canlı dil değiştirme** — Çalışma zamanında tam TR/EN arayüz geçişi, yeniden başlatma gerekmez
+- 👥 **Cihaz profili yönetimi** — Birden fazla iOS/Android cihaz yapılandırmasını kaydedip aralarında geçiş yapın
+- 🚫 **Blacklist desteği** — Bilinen gürültülü sistem kaynaklı resource ID'lerini filtreleyin
 
 ---
 
@@ -778,10 +808,6 @@ Uygulama penceresinin sağ üst köşesindeki açılır menüden **TR** (Türkç
 
 ---
 
-*Testability Scanner — v4.5 | Mobil Erişilebilirlik Raporlayıcı*
-
----
-
 ## 📜 Lisans
 
 **Özel Mülkiyetli Yazılım (Proprietary) — Tüm Hakları Saklıdır**
@@ -798,5 +824,8 @@ Bu proje, dahili bir Ar-Ge çıktısı olarak geliştirilmiştir. İzinsiz kulla
 
 **Yunus Şahin**
 GitHub: [@yyunussahinn](https://github.com/yyunussahinn)
+
+---
+*Testability Scanner — v4.5 | Mobil Erişilebilirlik Raporlayıcı*
 
 ---
